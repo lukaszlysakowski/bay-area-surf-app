@@ -405,17 +405,20 @@ export function calculateBestTimeWindow(
   // Score each hour of the day
   const hourlyScores: Array<{ hour: number; score: number; tideHeight: number }> = []
 
-  // Filter to today's data only (5am to 8pm surfable hours)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
+  // Get the date from the tide data (use first prediction's date)
+  const firstPrediction = tideData.hourly[0]
+  if (!firstPrediction) return null
+
+  const targetDate = new Date(firstPrediction.time)
+  targetDate.setHours(0, 0, 0, 0)
+  const nextDay = new Date(targetDate)
+  nextDay.setDate(nextDay.getDate() + 1)
 
   for (const prediction of tideData.hourly) {
     const time = new Date(prediction.time)
 
-    // Only consider today and surfable hours (5am - 8pm)
-    if (time < today || time >= tomorrow) continue
+    // Only consider the target day and surfable hours (5am - 8pm)
+    if (time < targetDate || time >= nextDay) continue
     const hour = time.getHours()
     if (hour < 5 || hour > 20) continue
 
