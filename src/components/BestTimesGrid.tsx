@@ -8,6 +8,8 @@ interface BestTimesGridProps {
   spots: Array<SpotConfig & ScoreResult>
   tideDataMap: Map<string, TideData>
   driveTimesMap?: Map<string, { minutes: number }>
+  selectedDate: Date
+  dateLabel: string
   onSpotClick?: (spotId: string) => void
 }
 
@@ -15,16 +17,18 @@ export function BestTimesGrid({
   spots,
   tideDataMap,
   driveTimesMap,
+  selectedDate,
+  dateLabel,
   onSpotClick,
 }: BestTimesGridProps) {
-  // Calculate best times for each spot
+  // Calculate best times for each spot based on selected date
   const spotsWithTimes = useMemo(() => {
     return spots.map((spot) => {
       const tideData = tideDataMap.get(spot.id)
       const bestTimeWindow = tideData
         ? calculateBestTimeWindow(tideData, spot.bestTide)
         : null
-      const sunTimes = getSunTimes(spot.coordinates.lat, spot.coordinates.lng, new Date())
+      const sunTimes = getSunTimes(spot.coordinates.lat, spot.coordinates.lng, selectedDate)
       const driveTime = driveTimesMap?.get(spot.id)?.minutes
 
       return {
@@ -34,17 +38,22 @@ export function BestTimesGrid({
         driveTime,
       }
     })
-  }, [spots, tideDataMap, driveTimesMap])
+  }, [spots, tideDataMap, driveTimesMap, selectedDate])
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
       <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-3">
-        <h2 className="text-white font-semibold flex items-center gap-2">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Best Surf Times Today
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-white font-semibold flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Best Surf Times
+          </h2>
+          <span className="text-emerald-100 text-sm font-medium bg-white/20 px-2 py-0.5 rounded">
+            {dateLabel}
+          </span>
+        </div>
       </div>
 
       <div className="divide-y divide-gray-100">

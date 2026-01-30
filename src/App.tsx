@@ -453,6 +453,8 @@ function App() {
                 spots={filteredSpots}
                 tideDataMap={tideDataMap}
                 driveTimesMap={driveTimes}
+                selectedDate={getDateForOption(selectedDate)}
+                dateLabel={formatDateDisplay(selectedDate)}
                 onSpotClick={handleSpotSelect}
               />
             )}
