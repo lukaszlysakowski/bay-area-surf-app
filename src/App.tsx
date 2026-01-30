@@ -7,6 +7,7 @@ import { MapView, useUserLocation } from './components/MapView'
 import { DateTabs, getDateForOption, formatDateDisplay, formatDateForAPI } from './components/DateTabs'
 import { TideCalendar } from './components/TideCalendar'
 import { WeekForecast } from './components/WeekForecast'
+import { BestTimesGrid } from './components/BestTimesGrid'
 import { getRatingColor } from './lib/utils'
 import { formatDriveTime } from './lib/api/osrm'
 import { getConditionsQuality, getIdealWaveRange } from './lib/scoring'
@@ -444,6 +445,16 @@ function App() {
                 </div>
                 <p className="mt-3 text-sm opacity-90 line-clamp-2">{bestSpot.breakdown}</p>
               </div>
+            )}
+
+            {/* Best Times Grid - shows optimal surf windows for all locations */}
+            {viewMode === 'list' && filteredSpots.length > 0 && (
+              <BestTimesGrid
+                spots={filteredSpots}
+                tideDataMap={tideDataMap}
+                driveTimesMap={driveTimes}
+                onSpotClick={handleSpotSelect}
+              />
             )}
 
             {/* Main Content Area */}
