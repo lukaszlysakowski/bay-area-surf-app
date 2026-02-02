@@ -1,17 +1,21 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react'
 import { useSurfData } from './hooks/useSurfData'
 import { useAllDriveTimes } from './hooks/useDriveTime'
 import { usePreferences } from './hooks/usePreferences'
+import { useSpitcastForecasts } from './hooks/useSpitcast'
 import { SpotCard } from './components/SpotCard'
 import { MapView, useUserLocation } from './components/MapView'
-import { DateTabs, getDateForOption, formatDateDisplay, formatDateForAPI } from './components/DateTabs'
-import { TideCalendar } from './components/TideCalendar'
-import { WeekForecast } from './components/WeekForecast'
+import { DateTabs, getDateForOption, formatDateDisplay, formatDateForAPI, getDateOptionForDate } from './components/DateTabs'
 import { BestTimesGrid } from './components/BestTimesGrid'
 import { getRatingColor } from './lib/utils'
 import { formatDriveTime } from './lib/api/osrm'
 import { getConditionsQuality, getIdealWaveRange } from './lib/scoring'
 import { SURF_SPOTS } from './lib/spots'
+
+// Lazy load heavy modal components for better initial load
+const TideCalendar = lazy(() => import('./components/TideCalendar').then(m => ({ default: m.TideCalendar })))
+const WeekForecast = lazy(() => import('./components/WeekForecast').then(m => ({ default: m.WeekForecast })))
+const SpotDetails = lazy(() => import('./components/SpotDetails').then(m => ({ default: m.SpotDetails })))
 
 function App() {
   // Persisted preferences
@@ -36,7 +40,9 @@ function App() {
   const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null)
   const [showTideCalendar, setShowTideCalendar] = useState(false)
   const [showWeekForecast, setShowWeekForecast] = useState(false)
+  const [showSpotDetails, setShowSpotDetails] = useState(false)
   const [forecastSpot, setForecastSpot] = useState<typeof SURF_SPOTS[0] | null>(null)
+  const [detailsSpot, setDetailsSpot] = useState<typeof SURF_SPOTS[0] | null>(null)
 
   // User location
   const {
@@ -71,6 +77,11 @@ function App() {
   const { data: driveTimes, isLoading: driveTimesLoading } = useAllDriveTimes({
     userLocation,
   })
+
+  // Fetch Spitcast forecasts for shape ratings
+  const spitcastDate = getDateForOption(selectedDate)
+  const spotIds = useMemo(() => SURF_SPOTS.map(s => s.id), [])
+  const { forecastMap: spitcastMap } = useSpitcastForecasts(spotIds, spitcastDate)
 
   const idealRange = getIdealWaveRange(surferType, skillLevel)
   const isToday = selectedDate === 'today'
@@ -531,7 +542,15 @@ function App() {
                             conditions={conditionsMap.get(spot.id)}
                             tideData={tideDataMap.get(spot.id)}
                             driveTimeMinutes={driveTimes?.get(spot.id)?.minutes}
+                            spitcastForecast={spitcastMap.get(spot.id)}
                             onSelect={() => handleSpotSelect(spot.id)}
+                            onViewDetails={() => {
+                              const fullSpot = SURF_SPOTS.find(s => s.id === spot.id)
+                              if (fullSpot) {
+                                setDetailsSpot(fullSpot)
+                                setShowSpotDetails(true)
+                              }
+                            }}
                           />
                         </div>
                       ))
@@ -547,43 +566,79 @@ function App() {
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Wave data from NOAA NDBC • Tides from NOAA CO-OPS • Routes from OSRM
+                Wave data from NOAA NDBC • Tides from NOAA CO-OPS • Shape from Spitcast • Routes from OSRM
               </div>
             </div>
           </>
         )}
       </main>
 
-      {/* Tide Calendar Modal */}
-      {showTideCalendar && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <TideCalendar
-            stationId="9414290"
-            stationName="San Francisco (Fort Point)"
-            onClose={() => setShowTideCalendar(false)}
-          />
+      {/* Modal Loading Fallback */}
+      <Suspense fallback={
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl p-6 shadow-xl">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500 mx-auto"></div>
+            <p className="mt-3 text-gray-500 text-sm">Loading...</p>
+          </div>
         </div>
-      )}
+      }>
+        {/* Tide Calendar Modal */}
+        {showTideCalendar && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <TideCalendar
+              stationId="9414290"
+              stationName="San Francisco (Fort Point)"
+              onClose={() => setShowTideCalendar(false)}
+              onSelectDate={(date) => {
+                const dateOption = getDateOptionForDate(date)
+                if (dateOption) {
+                  setSelectedDate(dateOption)
+                }
+                setShowTideCalendar(false)
+              }}
+            />
+          </div>
+        )}
 
-      {/* Week Forecast Modal */}
-      {showWeekForecast && forecastSpot && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <WeekForecast
-            spot={forecastSpot}
-            currentBuoyData={conditionsMap.get(forecastSpot.id) ? {
-              timestamp: new Date(),
-              waveHeight: conditionsMap.get(forecastSpot.id)!.waveHeight,
-              wavePeriod: conditionsMap.get(forecastSpot.id)!.wavePeriod,
-              waveDirection: conditionsMap.get(forecastSpot.id)!.swellDirection,
-              windSpeed: conditionsMap.get(forecastSpot.id)!.windSpeed,
-              windDirection: conditionsMap.get(forecastSpot.id)!.windDirection,
-              waterTemp: 55,
-              airTemp: 60,
-            } : null}
-            onClose={() => setShowWeekForecast(false)}
-          />
-        </div>
-      )}
+        {/* Week Forecast Modal */}
+        {showWeekForecast && forecastSpot && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <WeekForecast
+              spot={forecastSpot}
+              currentBuoyData={conditionsMap.get(forecastSpot.id) ? {
+                timestamp: new Date(),
+                waveHeight: conditionsMap.get(forecastSpot.id)!.waveHeight,
+                wavePeriod: conditionsMap.get(forecastSpot.id)!.wavePeriod,
+                waveDirection: conditionsMap.get(forecastSpot.id)!.swellDirection,
+                windSpeed: conditionsMap.get(forecastSpot.id)!.windSpeed,
+                windDirection: conditionsMap.get(forecastSpot.id)!.windDirection,
+                waterTemp: 55,
+                airTemp: 60,
+              } : null}
+              onClose={() => setShowWeekForecast(false)}
+              onSelectDate={(date) => {
+                const dateOption = getDateOptionForDate(date)
+                if (dateOption) {
+                  setSelectedDate(dateOption)
+                }
+                setShowWeekForecast(false)
+              }}
+            />
+          </div>
+        )}
+
+        {/* Spot Details Modal */}
+        {showSpotDetails && detailsSpot && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <SpotDetails
+              spot={detailsSpot}
+              conditions={conditionsMap.get(detailsSpot.id)}
+              score={sortedSpots.find(s => s.id === detailsSpot.id)?.score}
+              onClose={() => setShowSpotDetails(false)}
+            />
+          </div>
+        )}
+      </Suspense>
     </div>
   )
 }

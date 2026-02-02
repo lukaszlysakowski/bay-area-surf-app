@@ -55,6 +55,14 @@ export interface SpotConfig {
   bestTide: 'low' | 'mid' | 'high' | 'any'
   buoyStation: string // NOAA buoy station ID
   tideStation: string // NOAA tide station ID
+  // Extended spot details
+  breakType: 'beach' | 'point' | 'reef' | 'rivermouth'
+  skillLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert'
+  hazards?: string[]
+  parking?: string
+  facilities?: string[]
+  bestSeason?: string
+  typicalCrowd?: 'empty' | 'light' | 'moderate' | 'crowded'
 }
 
 // Complete Surf Spot Data (with calculated fields)

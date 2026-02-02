@@ -8,9 +8,10 @@ interface TideCalendarProps {
   stationId: string
   stationName?: string
   onClose?: () => void
+  onSelectDate?: (date: Date) => void
 }
 
-export function TideCalendar({ stationId, stationName, onClose }: TideCalendarProps) {
+export function TideCalendar({ stationId, stationName, onClose, onSelectDate }: TideCalendarProps) {
   const [currentDate, setCurrentDate] = useState(() => {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1)
@@ -32,7 +33,7 @@ export function TideCalendar({ stationId, stationName, onClose }: TideCalendarPr
   // Get moon phases for the month
   const moonPhases = useMemo(() => getMonthMoonPhases(year, month), [year, month])
 
-  // Group tide data by day
+  // Group tide data by day (high/low points)
   const tidesByDay = useMemo(() => {
     if (!tideData) return new Map<number, { highs: number[]; lows: number[] }>()
 
@@ -58,6 +59,38 @@ export function TideCalendar({ stationId, stationName, onClose }: TideCalendarPr
     return grouped
   }, [tideData, month])
 
+  // Group hourly tide data by day for sparklines
+  const hourlyByDay = useMemo(() => {
+    if (!tideData?.hourly) return new Map<number, number[]>()
+
+    const grouped = new Map<number, number[]>()
+
+    for (const tide of tideData.hourly) {
+      const date = new Date(tide.time)
+      if (date.getMonth() !== month) continue
+
+      const day = date.getDate()
+      if (!grouped.has(day)) {
+        grouped.set(day, [])
+      }
+      grouped.get(day)!.push(tide.height)
+    }
+
+    return grouped
+  }, [tideData, month])
+
+  // Calculate global min/max for consistent sparkline scaling
+  const { globalMin, globalMax } = useMemo(() => {
+    if (!tideData?.hourly || tideData.hourly.length === 0) {
+      return { globalMin: 0, globalMax: 6 }
+    }
+    const heights = tideData.hourly.map(t => t.height)
+    return {
+      globalMin: Math.min(...heights) - 0.5,
+      globalMax: Math.max(...heights) + 0.5
+    }
+  }, [tideData])
+
   // Calendar grid setup
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const firstDayOfWeek = new Date(year, month, 1).getDay()
@@ -75,9 +108,9 @@ export function TideCalendar({ stationId, stationName, onClose }: TideCalendarPr
   const monthName = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden max-w-4xl w-full">
+    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden max-w-4xl w-full max-h-[90vh] flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-cyan-500 to-cyan-600 text-white px-6 py-4">
+      <div className="bg-gradient-to-r from-cyan-500 to-cyan-600 text-white px-6 py-4 shrink-0">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold font-[Outfit]">Tide Calendar</h2>
@@ -120,7 +153,7 @@ export function TideCalendar({ stationId, stationName, onClose }: TideCalendarPr
       </div>
 
       {/* Calendar Grid */}
-      <div className="p-4">
+      <div className="p-4 overflow-y-auto flex-1">
         {/* Weekday Headers */}
         <div className="grid grid-cols-7 gap-1 mb-2">
           {weekdays.map((day) => (
@@ -145,23 +178,30 @@ export function TideCalendar({ stationId, stationName, onClose }: TideCalendarPr
             {/* Day cells */}
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1
+              const cellDate = new Date(year, month, day)
               const isToday =
                 today.getDate() === day &&
                 today.getMonth() === month &&
                 today.getFullYear() === year
               const moonInfo = moonPhases.get(day)
               const tides = tidesByDay.get(day)
+              const hourlyData = hourlyByDay.get(day)
               const isWeekend = (firstDayOfWeek + i) % 7 === 0 || (firstDayOfWeek + i) % 7 === 6
+              const isPast = cellDate < today && !isToday
 
               return (
-                <div
+                <button
                   key={day}
-                  className={`h-24 rounded-lg p-1.5 border transition-colors ${
-                    isToday
-                      ? 'bg-cyan-50 border-cyan-300'
+                  onClick={() => !isPast && onSelectDate?.(cellDate)}
+                  disabled={isPast}
+                  className={`h-24 rounded-lg p-1.5 border transition-all text-left ${
+                    isPast
+                      ? 'bg-gray-50 border-gray-100 opacity-50 cursor-not-allowed'
+                      : isToday
+                      ? 'bg-cyan-50 border-cyan-300 cursor-pointer hover:shadow-md'
                       : isWeekend
-                      ? 'bg-blue-50/50 border-gray-100'
-                      : 'bg-white border-gray-100 hover:border-gray-200'
+                      ? 'bg-blue-50/50 border-gray-100 cursor-pointer hover:border-blue-300 hover:shadow-sm'
+                      : 'bg-white border-gray-100 cursor-pointer hover:border-gray-300 hover:shadow-sm'
                   }`}
                 >
                   {/* Day number and moon */}
@@ -180,28 +220,34 @@ export function TideCalendar({ stationId, stationName, onClose }: TideCalendarPr
                     )}
                   </div>
 
-                  {/* Tide info */}
+                  {/* Sparkline tide chart */}
+                  {hourlyData && hourlyData.length > 0 && (
+                    <div className="mt-1">
+                      <TideSparkline
+                        data={hourlyData}
+                        minValue={globalMin}
+                        maxValue={globalMax}
+                        isToday={isToday}
+                      />
+                    </div>
+                  )}
+
+                  {/* Tide high/low values */}
                   {tides && (
-                    <div className="mt-1 space-y-0.5">
+                    <div className="flex items-center justify-between mt-0.5 px-0.5">
                       {tides.highs.length > 0 && (
-                        <div className="flex items-center gap-1">
-                          <span className="text-[10px] text-blue-600">▲</span>
-                          <span className="text-[10px] text-gray-600">
-                            {Math.max(...tides.highs).toFixed(1)}ft
-                          </span>
-                        </div>
+                        <span className="text-[9px] text-blue-600 font-medium">
+                          ▲{Math.max(...tides.highs).toFixed(1)}
+                        </span>
                       )}
                       {tides.lows.length > 0 && (
-                        <div className="flex items-center gap-1">
-                          <span className="text-[10px] text-orange-500">▼</span>
-                          <span className="text-[10px] text-gray-600">
-                            {Math.min(...tides.lows).toFixed(1)}ft
-                          </span>
-                        </div>
+                        <span className="text-[9px] text-orange-500 font-medium">
+                          ▼{Math.min(...tides.lows).toFixed(1)}
+                        </span>
                       )}
                     </div>
                   )}
-                </div>
+                </button>
               )
             })}
           </div>
@@ -222,4 +268,115 @@ export function TideCalendar({ stationId, stationName, onClose }: TideCalendarPr
       </div>
     </div>
   )
+}
+
+// Sparkline component for mini tide chart
+interface TideSparklineProps {
+  data: number[]
+  minValue: number
+  maxValue: number
+  isToday?: boolean
+}
+
+function TideSparkline({ data, minValue, maxValue, isToday }: TideSparklineProps) {
+  const width = 80
+  const height = 28
+  const padding = 2
+
+  const range = maxValue - minValue || 1
+  const chartWidth = width - padding * 2
+  const chartHeight = height - padding * 2
+
+  // Create points for the sparkline
+  const points = data.map((value, index) => {
+    const x = padding + (chartWidth * index) / (data.length - 1)
+    const y = padding + chartHeight - ((value - minValue) / range) * chartHeight
+    return { x, y }
+  })
+
+  // Create smooth path
+  const pathD = createSparklinePath(points)
+
+  // Create fill path
+  const fillPath = `${pathD} L ${points[points.length - 1].x} ${height - padding} L ${padding} ${height - padding} Z`
+
+  // Colors based on isToday
+  const lineColor = isToday ? '#0891b2' : '#94a3b8'
+  const fillColor = isToday ? '#0891b2' : '#94a3b8'
+  const fillOpacity = isToday ? 0.2 : 0.1
+
+  return (
+    <svg
+      width="100%"
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="xMidYMid meet"
+      className="overflow-visible"
+    >
+      {/* Gradient fill */}
+      <defs>
+        <linearGradient id={`sparkGradient-${isToday ? 'today' : 'default'}`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={fillColor} stopOpacity={fillOpacity} />
+          <stop offset="100%" stopColor={fillColor} stopOpacity={0} />
+        </linearGradient>
+      </defs>
+
+      {/* Fill area */}
+      <path
+        d={fillPath}
+        fill={`url(#sparkGradient-${isToday ? 'today' : 'default'})`}
+      />
+
+      {/* Line */}
+      <path
+        d={pathD}
+        fill="none"
+        stroke={lineColor}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+// Create smooth bezier path for sparkline
+function createSparklinePath(points: Array<{ x: number; y: number }>): string {
+  if (points.length < 2) return ''
+  if (points.length === 2) {
+    return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`
+  }
+
+  let path = `M ${points[0].x} ${points[0].y}`
+
+  for (let i = 1; i < points.length; i++) {
+    const prev = points[i - 1]
+    const curr = points[i]
+    const next = points[i + 1]
+    const prevPrev = points[i - 2]
+
+    const tension = 0.25
+
+    let cp1x: number, cp1y: number
+    if (prevPrev) {
+      cp1x = prev.x + (curr.x - prevPrev.x) * tension
+      cp1y = prev.y + (curr.y - prevPrev.y) * tension
+    } else {
+      cp1x = prev.x + (curr.x - prev.x) * tension
+      cp1y = prev.y
+    }
+
+    let cp2x: number, cp2y: number
+    if (next) {
+      cp2x = curr.x - (next.x - prev.x) * tension
+      cp2y = curr.y - (next.y - prev.y) * tension
+    } else {
+      cp2x = curr.x - (curr.x - prev.x) * tension
+      cp2y = curr.y
+    }
+
+    path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${curr.x} ${curr.y}`
+  }
+
+  return path
 }

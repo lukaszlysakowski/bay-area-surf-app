@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-export type DateOption = 'today' | 'tomorrow' | 'friday' | 'saturday' | 'sunday'
+export type DateOption = 'now' | 'today' | 'tomorrow' | 'friday' | 'saturday' | 'sunday'
 
 interface DateTabsProps {
   selected: DateOption
@@ -12,7 +12,16 @@ export function DateTabs({ selected, onChange }: DateTabsProps) {
     const today = new Date()
     const dayOfWeek = today.getDay() // 0 = Sunday, 6 = Saturday
 
-    const options: Array<{ id: DateOption; label: string; date: Date; available: boolean }> = []
+    const options: Array<{ id: DateOption; label: string; date: Date; available: boolean; isLive?: boolean }> = []
+
+    // Current conditions (live)
+    options.push({
+      id: 'now',
+      label: 'Now',
+      date: today,
+      available: true,
+      isLive: true,
+    })
 
     // Today is always available
     options.push({
@@ -80,16 +89,23 @@ export function DateTabs({ selected, onChange }: DateTabsProps) {
         <button
           key={tab.id}
           onClick={() => onChange(tab.id)}
-          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
             selected === tab.id
-              ? 'bg-white text-gray-800 shadow-sm'
+              ? tab.isLive
+                ? 'bg-emerald-500 text-white shadow-sm'
+                : 'bg-white text-gray-800 shadow-sm'
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
+          {tab.isLive && (
+            <span className={`w-2 h-2 rounded-full ${selected === tab.id ? 'bg-white' : 'bg-emerald-500'} animate-pulse`}></span>
+          )}
           <span>{tab.label}</span>
-          <span className="ml-1 text-xs text-gray-400">
-            {formatShortDate(tab.date)}
-          </span>
+          {!tab.isLive && (
+            <span className="text-xs text-gray-400">
+              {formatShortDate(tab.date)}
+            </span>
+          )}
         </button>
       ))}
     </div>
@@ -108,6 +124,7 @@ export function getDateForOption(option: DateOption): Date {
   today.setHours(0, 0, 0, 0)
 
   switch (option) {
+    case 'now':
     case 'today':
       return today
 
@@ -152,6 +169,10 @@ export function getDateForOption(option: DateOption): Date {
 export function formatDateDisplay(option: DateOption): string {
   const date = getDateForOption(option)
 
+  if (option === 'now') {
+    return 'Current Conditions'
+  }
+
   if (option === 'today') {
     return 'Today, ' + date.toLocaleDateString('en-US', {
       weekday: 'long',
@@ -183,4 +204,43 @@ export function formatDateForAPI(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}${month}${day}`
+}
+
+/**
+ * Converts a Date to a DateOption if it matches today, tomorrow, or this weekend
+ * Returns null if the date doesn't match any available option
+ */
+export function getDateOptionForDate(date: Date): DateOption | null {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const targetDate = new Date(date)
+  targetDate.setHours(0, 0, 0, 0)
+
+  const diffDays = Math.round((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+  // Check if it's today
+  if (diffDays === 0) return 'today'
+
+  // Check if it's tomorrow
+  if (diffDays === 1) return 'tomorrow'
+
+  // Check if it matches upcoming weekend days (within 7 days)
+  if (diffDays > 1 && diffDays <= 7) {
+    const todayDow = today.getDay()
+
+    // Check Friday
+    const daysUntilFriday = (5 - todayDow + 7) % 7 || 7
+    if (daysUntilFriday > 1 && diffDays === daysUntilFriday) return 'friday'
+
+    // Check Saturday
+    const daysUntilSaturday = (6 - todayDow + 7) % 7 || 7
+    if (daysUntilSaturday > 1 && diffDays === daysUntilSaturday) return 'saturday'
+
+    // Check Sunday
+    const daysUntilSunday = (0 - todayDow + 7) % 7 || 7
+    if (daysUntilSunday > 1 && diffDays === daysUntilSunday) return 'sunday'
+  }
+
+  return null
 }

@@ -4,6 +4,8 @@ import { degreesToDirection } from '../lib/api/noaa'
 import { getRatingColor, getRatingColorClass } from '../lib/utils'
 import { calculateBestTimeWindow } from '../lib/scoring'
 import { getSunTimes, formatTime, getDawnPatrolStatus } from '../lib/sun'
+import { getSwellSource, getHistoricalContext, getHistoricalPercentile } from '../lib/spots'
+import { formatShape, getShapeBgClass, type SpitcastDayForecast } from '../lib/api/spitcast'
 import type { SurfConditions, TideData } from '../types'
 
 interface SpotCardProps {
@@ -22,7 +24,9 @@ interface SpotCardProps {
   conditions?: SurfConditions
   tideData?: TideData
   driveTimeMinutes?: number
+  spitcastForecast?: SpitcastDayForecast | null
   onSelect?: () => void
+  onViewDetails?: () => void
 }
 
 export function SpotCard({
@@ -31,7 +35,9 @@ export function SpotCard({
   conditions,
   tideData,
   driveTimeMinutes,
+  spitcastForecast,
   onSelect,
+  onViewDetails,
 }: SpotCardProps) {
   const [expanded, setExpanded] = useState(false)
 
@@ -49,6 +55,21 @@ export function SpotCard({
   const dawnPatrol = useMemo(() => {
     return getDawnPatrolStatus(sunTimes, driveTimeMinutes)
   }, [sunTimes, driveTimeMinutes])
+
+  // Get swell source info
+  const swellInfo = useMemo(() => {
+    if (!conditions) return null
+    return getSwellSource(conditions.swellDirection)
+  }, [conditions])
+
+  // Get historical percentile
+  const historicalPercentile = useMemo(() => {
+    return getHistoricalPercentile(spot.score)
+  }, [spot.score])
+
+  const historicalContext = useMemo(() => {
+    return getHistoricalContext(spot.score)
+  }, [spot.score])
 
   // Get glow class based on rating
   const glowClass = {
@@ -107,11 +128,16 @@ export function SpotCard({
                   value={`${conditions.windSpeed.toFixed(0)}mph`}
                   subvalue={degreesToDirection(conditions.windDirection)}
                 />
-                <ConditionPill
-                  label="Swell"
-                  value={degreesToDirection(conditions.swellDirection)}
-                  subvalue={`${conditions.swellDirection}°`}
-                />
+                {swellInfo && (
+                  <ConditionPill
+                    label="Swell"
+                    value={`${swellInfo.arrow} ${swellInfo.direction}`}
+                    subvalue={swellInfo.source.split('/')[0].trim()}
+                  />
+                )}
+                {spitcastForecast && (
+                  <SpitcastPill forecast={spitcastForecast} />
+                )}
                 {bestTimeWindow && (
                   <ConditionPill
                     label="Best"
@@ -127,11 +153,25 @@ export function SpotCard({
           <div className="text-right shrink-0">
             <div className="text-3xl font-bold text-gray-800">{spot.score}</div>
             <div className="text-xs text-gray-400">/ 100</div>
+            {/* Historical Percentile */}
+            <div className="mt-1 text-xs text-indigo-600 font-medium">
+              Top {100 - historicalPercentile}%
+            </div>
           </div>
         </div>
 
+        {/* Historical Context */}
+        <div className="mt-2 ml-14">
+          <span className="inline-flex items-center gap-1.5 text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+            {historicalContext}
+          </span>
+        </div>
+
         {/* Breakdown Text */}
-        <p className="text-sm text-gray-600 mt-3 pl-14">{spot.breakdown}</p>
+        <p className="text-sm text-gray-600 mt-2 pl-14">{spot.breakdown}</p>
 
         {/* Best Time & Dawn Patrol (collapsed view) */}
         <div className="mt-3 ml-14 flex flex-wrap gap-2">
@@ -235,7 +275,7 @@ export function SpotCard({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 mt-4">
+          <div className="flex flex-wrap gap-2 mt-4">
             <a
               href={`https://www.google.com/maps/dir/?api=1&destination=${spot.coordinates.lat},${spot.coordinates.lng}`}
               target="_blank"
@@ -254,6 +294,20 @@ export function SpotCard({
                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
               >
                 View on Map
+              </button>
+            )}
+            {onViewDetails && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onViewDetails()
+                }}
+                className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200 transition-colors flex items-center gap-1.5"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Spot Details
               </button>
             )}
           </div>
@@ -290,6 +344,17 @@ function ConditionPill({
       {subvalue && (
         <span className={`text-xs ${highlight ? 'text-cyan-500' : 'text-gray-500'}`}>{subvalue}</span>
       )}
+    </div>
+  )
+}
+
+function SpitcastPill({ forecast }: { forecast: SpitcastDayForecast }) {
+  const shapeClass = getShapeBgClass(forecast.bestShape)
+  return (
+    <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg ${shapeClass}`}>
+      <span className="text-xs opacity-80">Shape</span>
+      <span className="text-sm font-semibold">{formatShape(forecast.bestShape)}</span>
+      <span className="text-xs opacity-70">{forecast.minSize.toFixed(0)}-{forecast.maxSize.toFixed(0)}ft</span>
     </div>
   )
 }

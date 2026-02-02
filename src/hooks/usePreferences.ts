@@ -3,7 +3,7 @@ import type { SurfPreferences } from '../types'
 
 const STORAGE_KEY = 'surfPreferences'
 
-type DateOption = 'today' | 'tomorrow' | 'friday' | 'saturday' | 'sunday'
+type DateOption = 'now' | 'today' | 'tomorrow' | 'friday' | 'saturday' | 'sunday'
 
 type RadiusOption = 'all' | '15' | '30' | '45' | '60'
 
@@ -22,7 +22,7 @@ const DEFAULT_PREFERENCES: StoredPreferences = {
   skillLevel: 'advanced',
   viewMode: 'list',
   sortMode: 'score',
-  selectedDate: 'today',
+  selectedDate: 'now',
   searchRadius: 'all',
 }
 

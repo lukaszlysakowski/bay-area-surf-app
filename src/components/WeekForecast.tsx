@@ -8,9 +8,10 @@ interface WeekForecastProps {
   spot: SpotConfig
   currentBuoyData?: BuoyData | null
   onClose?: () => void
+  onSelectDate?: (date: Date) => void
 }
 
-export function WeekForecast({ spot, currentBuoyData, onClose }: WeekForecastProps) {
+export function WeekForecast({ spot, currentBuoyData, onClose, onSelectDate }: WeekForecastProps) {
   // Get next 7 days
   const dates = useMemo(() => getNextDays(7), [])
 
@@ -52,9 +53,9 @@ export function WeekForecast({ spot, currentBuoyData, onClose }: WeekForecastPro
   const currentPeriod = currentBuoyData?.wavePeriod ?? 10
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden max-w-4xl w-full">
+    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden max-w-4xl w-full max-h-[90vh] flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-4">
+      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-4 shrink-0">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold font-[Outfit]">7-Day Forecast</h2>
@@ -81,7 +82,7 @@ export function WeekForecast({ spot, currentBuoyData, onClose }: WeekForecastPro
           </div>
         </div>
       ) : (
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto flex-1">
           {/* Best Day Banner */}
           {weekAnalysis?.bestDay && (
             <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-4 mb-6">
@@ -125,14 +126,15 @@ export function WeekForecast({ spot, currentBuoyData, onClose }: WeekForecastPro
                 const isBestDay = weekAnalysis.bestDay?.date.getTime() === day.date.getTime()
 
                 return (
-                  <div
+                  <button
                     key={i}
-                    className={`rounded-xl p-3 text-center transition-all ${
+                    onClick={() => onSelectDate?.(day.date)}
+                    className={`rounded-xl p-3 text-center transition-all cursor-pointer hover:scale-[1.02] hover:shadow-md ${
                       isBestDay
                         ? 'bg-emerald-50 border-2 border-emerald-300 shadow-sm'
                         : isToday
                         ? 'bg-cyan-50 border border-cyan-200'
-                        : 'bg-gray-50 border border-gray-100'
+                        : 'bg-gray-50 border border-gray-100 hover:border-gray-300'
                     }`}
                   >
                     <p className={`text-xs font-medium ${
@@ -182,7 +184,7 @@ export function WeekForecast({ spot, currentBuoyData, onClose }: WeekForecastPro
                         </span>
                       </div>
                     )}
-                  </div>
+                  </button>
                 )
               })}
             </div>
@@ -195,10 +197,11 @@ export function WeekForecast({ spot, currentBuoyData, onClose }: WeekForecastPro
               {weekAnalysis?.days.map((day, i) => {
                 const isBestDay = weekAnalysis.bestDay?.date.getTime() === day.date.getTime()
                 return (
-                  <div
+                  <button
                     key={i}
-                    className={`flex items-center justify-between p-3 rounded-lg ${
-                      isBestDay ? 'bg-emerald-50 border border-emerald-200' : 'bg-gray-50'
+                    onClick={() => onSelectDate?.(day.date)}
+                    className={`w-full flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all hover:shadow-sm ${
+                      isBestDay ? 'bg-emerald-50 border border-emerald-200 hover:bg-emerald-100' : 'bg-gray-50 hover:bg-gray-100'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -227,7 +230,7 @@ export function WeekForecast({ spot, currentBuoyData, onClose }: WeekForecastPro
                         {day.score}
                       </div>
                     </div>
-                  </div>
+                  </button>
                 )
               })}
             </div>

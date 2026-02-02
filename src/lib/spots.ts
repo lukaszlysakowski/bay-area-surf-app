@@ -12,6 +12,13 @@ export const SURF_SPOTS: SpotConfig[] = [
     bestTide: 'mid',
     buoyStation: '46012',
     tideStation: '9414290',
+    breakType: 'reef',
+    skillLevel: 'expert',
+    hazards: ['Heavy waves', 'Rocks', 'Strong currents', 'Cold water', 'Sharks'],
+    parking: 'Limited parking at Pillar Point Harbor, arrive early',
+    facilities: ['Restrooms', 'Showers at harbor'],
+    bestSeason: 'October - March (big wave season)',
+    typicalCrowd: 'light',
   },
   {
     id: 'pacifica-linda-mar',
@@ -24,6 +31,13 @@ export const SURF_SPOTS: SpotConfig[] = [
     bestTide: 'mid',
     buoyStation: '46026',
     tideStation: '9414290',
+    breakType: 'beach',
+    skillLevel: 'beginner',
+    hazards: ['Rip currents', 'Crowded lineup'],
+    parking: 'Large parking lot at Linda Mar Beach ($3/hour)',
+    facilities: ['Restrooms', 'Showers', 'Taco Bell nearby', 'Surf shop rentals'],
+    bestSeason: 'Year-round, best in fall',
+    typicalCrowd: 'crowded',
   },
   {
     id: 'ocean-beach-sf',
@@ -36,6 +50,13 @@ export const SURF_SPOTS: SpotConfig[] = [
     bestTide: 'mid',
     buoyStation: '46026',
     tideStation: '9414290',
+    breakType: 'beach',
+    skillLevel: 'advanced',
+    hazards: ['Heavy shorebreak', 'Strong rips', 'Cold water', 'Sharks', 'Sneaker waves'],
+    parking: 'Free street parking along Great Highway',
+    facilities: ['Restrooms at various locations', 'Beach Chalet restaurant'],
+    bestSeason: 'Fall and winter for best waves',
+    typicalCrowd: 'moderate',
   },
   {
     id: 'fort-point',
@@ -48,6 +69,13 @@ export const SURF_SPOTS: SpotConfig[] = [
     bestTide: 'mid',
     buoyStation: '46237',
     tideStation: '9414290',
+    breakType: 'point',
+    skillLevel: 'advanced',
+    hazards: ['Rocks', 'Strong currents', 'Ship traffic', 'Cold water'],
+    parking: 'Limited parking at Fort Point, arrive very early',
+    facilities: ['Restrooms at Fort Point'],
+    bestSeason: 'Winter (needs big NW swell to break)',
+    typicalCrowd: 'light',
   },
   {
     id: 'bolinas',
@@ -60,6 +88,13 @@ export const SURF_SPOTS: SpotConfig[] = [
     bestTide: 'any',
     buoyStation: '46214',
     tideStation: '9415020',
+    breakType: 'point',
+    skillLevel: 'intermediate',
+    hazards: ['Localism (be respectful)', 'Rocky bottom'],
+    parking: 'Street parking in town, respect locals',
+    facilities: ['Limited - small town'],
+    bestSeason: 'Year-round',
+    typicalCrowd: 'moderate',
   },
   {
     id: 'stinson-beach',
@@ -72,6 +107,13 @@ export const SURF_SPOTS: SpotConfig[] = [
     bestTide: 'mid',
     buoyStation: '46214',
     tideStation: '9415020',
+    breakType: 'beach',
+    skillLevel: 'intermediate',
+    hazards: ['Sharks (Red Triangle)', 'Rip currents'],
+    parking: 'Public lot and street parking',
+    facilities: ['Restrooms', 'Showers', 'Cafes in town'],
+    bestSeason: 'Fall for cleanest conditions',
+    typicalCrowd: 'moderate',
   },
   {
     id: 'rodeo-beach',
@@ -84,6 +126,13 @@ export const SURF_SPOTS: SpotConfig[] = [
     bestTide: 'mid',
     buoyStation: '46026',
     tideStation: '9414290',
+    breakType: 'beach',
+    skillLevel: 'intermediate',
+    hazards: ['Rip currents', 'Rocky sides', 'Cold water'],
+    parking: 'Free parking lot (closes at sunset)',
+    facilities: ['Restrooms', 'Marine Mammal Center nearby'],
+    bestSeason: 'Fall and winter',
+    typicalCrowd: 'light',
   },
   {
     id: 'muir-beach',
@@ -96,6 +145,13 @@ export const SURF_SPOTS: SpotConfig[] = [
     bestTide: 'mid',
     buoyStation: '46214',
     tideStation: '9415020',
+    breakType: 'beach',
+    skillLevel: 'intermediate',
+    hazards: ['Rocks on sides', 'Small takeoff zone'],
+    parking: 'Small parking lot (fills quickly on weekends)',
+    facilities: ['Restrooms', 'Pelican Inn pub nearby'],
+    bestSeason: 'Fall',
+    typicalCrowd: 'light',
   },
   {
     id: 'dillon-beach',
@@ -108,6 +164,13 @@ export const SURF_SPOTS: SpotConfig[] = [
     bestTide: 'mid',
     buoyStation: '46013',
     tideStation: '9415020',
+    breakType: 'beach',
+    skillLevel: 'intermediate',
+    hazards: ['Remote location', 'Strong currents', 'Cold water'],
+    parking: 'Paid parking at Dillon Beach Resort',
+    facilities: ['Restrooms', 'General store'],
+    bestSeason: 'Fall and winter',
+    typicalCrowd: 'empty',
   },
   {
     id: 'salmon-creek',
@@ -120,6 +183,13 @@ export const SURF_SPOTS: SpotConfig[] = [
     bestTide: 'mid',
     buoyStation: '46013',
     tideStation: '9415020',
+    breakType: 'beach',
+    skillLevel: 'intermediate',
+    hazards: ['Strong currents', 'Cold water', 'Remote'],
+    parking: 'Free parking lot at beach',
+    facilities: ['Restrooms', 'Bodega Bay town 10min away'],
+    bestSeason: 'Fall and winter',
+    typicalCrowd: 'light',
   },
 ]
 
@@ -170,4 +240,95 @@ export const TIDE_STATIONS = {
     name: 'Monterey',
     location: 'South of HMB',
   },
+}
+
+// Helper to get cardinal direction from degrees
+export function getCardinalDirection(degrees: number): string {
+  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+  const index = Math.round(degrees / 22.5) % 16
+  return directions[index]
+}
+
+// Helper to get swell source description
+export function getSwellSource(degrees: number): { direction: string; source: string; arrow: string } {
+  const cardinal = getCardinalDirection(degrees)
+
+  // Determine the source region based on direction
+  let source = ''
+  if (degrees >= 270 && degrees <= 315) {
+    source = 'North Pacific / Alaska'
+  } else if (degrees >= 225 && degrees < 270) {
+    source = 'West Pacific'
+  } else if (degrees >= 180 && degrees < 225) {
+    source = 'South Pacific / Southern Hemisphere'
+  } else if (degrees >= 315 || degrees < 45) {
+    source = 'North Pacific / Gulf of Alaska'
+  } else {
+    source = 'Local wind swell'
+  }
+
+  // Arrow pointing the direction the swell is coming FROM
+  const arrows: Record<string, string> = {
+    'N': '↓', 'NNE': '↙', 'NE': '↙', 'ENE': '←',
+    'E': '←', 'ESE': '←', 'SE': '↖', 'SSE': '↖',
+    'S': '↑', 'SSW': '↗', 'SW': '↗', 'WSW': '→',
+    'W': '→', 'WNW': '→', 'NW': '↘', 'NNW': '↘'
+  }
+
+  return {
+    direction: cardinal,
+    source,
+    arrow: arrows[cardinal] || '→'
+  }
+}
+
+// Historical averages by month (synthetic data based on typical NorCal patterns)
+export const HISTORICAL_AVERAGES: Record<number, { avgScore: number; avgWaveHeight: number; goodDaysPct: number }> = {
+  0: { avgScore: 68, avgWaveHeight: 6.5, goodDaysPct: 45 },  // January
+  1: { avgScore: 65, avgWaveHeight: 5.8, goodDaysPct: 40 },  // February
+  2: { avgScore: 58, avgWaveHeight: 4.5, goodDaysPct: 35 },  // March
+  3: { avgScore: 52, avgWaveHeight: 3.5, goodDaysPct: 30 },  // April
+  4: { avgScore: 48, avgWaveHeight: 3.0, goodDaysPct: 25 },  // May
+  5: { avgScore: 45, avgWaveHeight: 2.5, goodDaysPct: 20 },  // June
+  6: { avgScore: 42, avgWaveHeight: 2.2, goodDaysPct: 18 },  // July
+  7: { avgScore: 44, avgWaveHeight: 2.5, goodDaysPct: 20 },  // August
+  8: { avgScore: 55, avgWaveHeight: 3.5, goodDaysPct: 35 },  // September
+  9: { avgScore: 65, avgWaveHeight: 5.0, goodDaysPct: 45 },  // October
+  10: { avgScore: 70, avgWaveHeight: 6.0, goodDaysPct: 50 }, // November
+  11: { avgScore: 72, avgWaveHeight: 7.0, goodDaysPct: 52 }, // December
+}
+
+// Calculate historical percentile
+export function getHistoricalPercentile(score: number): number {
+  const month = new Date().getMonth()
+  const monthData = HISTORICAL_AVERAGES[month]
+
+  // Use a simple normal distribution approximation
+  // stdDev is roughly 15 points for surf scores
+  const stdDev = 15
+  const zScore = (score - monthData.avgScore) / stdDev
+
+  // Convert z-score to percentile (approximation)
+  // Using the cumulative distribution function approximation
+  const percentile = Math.round(50 * (1 + Math.tanh(zScore * 0.8)))
+
+  return Math.max(1, Math.min(99, percentile))
+}
+
+// Get historical context message
+export function getHistoricalContext(score: number): string {
+  const percentile = getHistoricalPercentile(score)
+  const month = new Date().toLocaleDateString('en-US', { month: 'long' })
+
+  if (percentile >= 90) {
+    return `Top 10% day for ${month}!`
+  } else if (percentile >= 75) {
+    return `Better than ${percentile}% of ${month} days`
+  } else if (percentile >= 50) {
+    return `Above average for ${month}`
+  } else if (percentile >= 25) {
+    return `Typical ${month} conditions`
+  } else {
+    return `Below average for ${month}`
+  }
 }
