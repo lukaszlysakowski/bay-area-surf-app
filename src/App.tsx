@@ -3,6 +3,7 @@ import { useSurfData } from './hooks/useSurfData'
 import { useAllDriveTimes } from './hooks/useDriveTime'
 import { usePreferences } from './hooks/usePreferences'
 import { useSpitcastForecasts } from './hooks/useSpitcast'
+import { useMarineForecast, getForecastForDate } from './hooks/useMarineForecast'
 import { SpotCard } from './components/SpotCard'
 import { MapView, useUserLocation } from './components/MapView'
 import { DateTabs, getDateForOption, formatDateDisplay, formatDateForAPI, getDateOptionForDate } from './components/DateTabs'
@@ -81,10 +82,21 @@ function App() {
   // Fetch Spitcast forecasts for shape ratings
   const spitcastDate = getDateForOption(selectedDate)
   const spotIds = useMemo(() => SURF_SPOTS.map(s => s.id), [])
-  const { forecastMap: spitcastMap } = useSpitcastForecasts(spotIds, spitcastDate)
+  const { forecastMap: spitcastMap, isLoading: spitcastLoading } = useSpitcastForecasts(spotIds, spitcastDate)
+
+  // Fetch Open-Meteo marine forecast for wave predictions
+  // Use Ocean Beach coordinates as representative for Bay Area
+  const { data: marineForecast, isLoading: marineLoading } = useMarineForecast(37.76, -122.51, 7)
+
+  // Get wave forecast for selected date
+  const waveForecastForDate = useMemo(() => {
+    if (!marineForecast) return null
+    return getForecastForDate(marineForecast, spitcastDate)
+  }, [marineForecast, spitcastDate])
 
   const idealRange = getIdealWaveRange(surferType, skillLevel)
-  const isToday = selectedDate === 'today'
+  const isToday = selectedDate === 'today' || selectedDate === 'now'
+  const isForecastLoading = spitcastLoading || marineLoading
 
   // Sort spots
   const sortedSpots = useMemo(() => {
@@ -165,8 +177,17 @@ function App() {
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-cyan-500 bg-clip-text text-transparent font-[Outfit]">
                   Bay Area Surf Almanac
                 </h1>
-                <p className="text-gray-500 text-sm mt-0.5">
+                <p className="text-gray-500 text-sm mt-0.5 flex items-center gap-2">
                   {formatDateDisplay(selectedDate)}
+                  {isForecastLoading && !isToday && (
+                    <span className="inline-flex items-center gap-1 text-indigo-500">
+                      <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span className="text-xs">forecast</span>
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
@@ -224,11 +245,15 @@ function App() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         {/* Forecast Notice for Future Dates */}
         {!isToday && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4 flex items-center gap-2">
-            <span className="text-amber-600">⚠️</span>
-            <p className="text-sm text-amber-800">
-              <strong>Forecast:</strong> Wave data is current (real-time from buoys).
-              Tide predictions shown are for <strong>{formatDateDisplay(selectedDate)}</strong>.
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-3 mb-4 flex items-center gap-2">
+            <span className="text-indigo-500">📊</span>
+            <p className="text-sm text-indigo-800">
+              <strong>Forecast Mode:</strong> Showing predicted waves from Open-Meteo and tide predictions for <strong>{formatDateDisplay(selectedDate)}</strong>.
+              {waveForecastForDate && (
+                <span className="ml-1 text-indigo-600">
+                  Expected {waveForecastForDate.minWaveHeight.toFixed(0)}-{waveForecastForDate.maxWaveHeight.toFixed(0)}ft waves.
+                </span>
+              )}
             </p>
           </div>
         )}
@@ -543,6 +568,8 @@ function App() {
                             tideData={tideDataMap.get(spot.id)}
                             driveTimeMinutes={driveTimes?.get(spot.id)?.minutes}
                             spitcastForecast={spitcastMap.get(spot.id)}
+                            waveForecast={!isToday ? waveForecastForDate : null}
+                            isForecasting={isForecastLoading}
                             onSelect={() => handleSpotSelect(spot.id)}
                             onViewDetails={() => {
                               const fullSpot = SURF_SPOTS.find(s => s.id === spot.id)

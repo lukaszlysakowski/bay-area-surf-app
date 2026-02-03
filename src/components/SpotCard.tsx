@@ -6,6 +6,7 @@ import { calculateBestTimeWindow } from '../lib/scoring'
 import { getSunTimes, formatTime, getDawnPatrolStatus } from '../lib/sun'
 import { getSwellSource, getHistoricalContext, getHistoricalPercentile } from '../lib/spots'
 import { formatShape, getShapeBgClass, type SpitcastDayForecast } from '../lib/api/spitcast'
+import type { MarineDayForecast } from '../hooks/useMarineForecast'
 import type { SurfConditions, TideData } from '../types'
 
 interface SpotCardProps {
@@ -25,6 +26,8 @@ interface SpotCardProps {
   tideData?: TideData
   driveTimeMinutes?: number
   spitcastForecast?: SpitcastDayForecast | null
+  waveForecast?: MarineDayForecast | null
+  isForecasting?: boolean
   onSelect?: () => void
   onViewDetails?: () => void
 }
@@ -36,6 +39,8 @@ export function SpotCard({
   tideData,
   driveTimeMinutes,
   spitcastForecast,
+  waveForecast,
+  isForecasting,
   onSelect,
   onViewDetails,
 }: SpotCardProps) {
@@ -117,12 +122,28 @@ export function SpotCard({
 
             {/* Conditions Summary */}
             {conditions && (
-              <div className="flex flex-wrap gap-3 mt-3">
-                <ConditionPill
-                  label="Waves"
-                  value={`${conditions.waveHeight.toFixed(1)}ft`}
-                  subvalue={`${conditions.wavePeriod.toFixed(0)}s`}
-                />
+              <div className="flex flex-wrap gap-3 mt-3 relative">
+                {/* Loading overlay for forecast data */}
+                {isForecasting && (
+                  <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10 rounded">
+                    <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+                {/* Wave data - use forecast when available for future dates */}
+                {waveForecast ? (
+                  <ConditionPill
+                    label="Waves"
+                    value={`${waveForecast.avgWaveHeight.toFixed(1)}ft`}
+                    subvalue={`${waveForecast.dominantPeriod.toFixed(0)}s`}
+                    forecast
+                  />
+                ) : (
+                  <ConditionPill
+                    label="Waves"
+                    value={`${conditions.waveHeight.toFixed(1)}ft`}
+                    subvalue={`${conditions.wavePeriod.toFixed(0)}s`}
+                  />
+                )}
                 <ConditionPill
                   label="Wind"
                   value={`${conditions.windSpeed.toFixed(0)}mph`}
@@ -329,20 +350,33 @@ function ConditionPill({
   value,
   subvalue,
   highlight,
+  forecast,
 }: {
   label: string
   value: string
   subvalue?: string
   highlight?: boolean
+  forecast?: boolean
 }) {
+  const baseClass = forecast
+    ? 'bg-indigo-50 border border-indigo-200'
+    : highlight
+    ? 'bg-cyan-100 border border-cyan-200'
+    : 'bg-gray-100'
+
+  const labelClass = forecast ? 'text-indigo-500' : highlight ? 'text-cyan-600' : 'text-gray-500'
+  const valueClass = forecast ? 'text-indigo-700' : highlight ? 'text-cyan-700' : 'text-gray-800'
+  const subvalueClass = forecast ? 'text-indigo-400' : highlight ? 'text-cyan-500' : 'text-gray-500'
+
   return (
-    <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg ${
-      highlight ? 'bg-cyan-100 border border-cyan-200' : 'bg-gray-100'
-    }`}>
-      <span className={`text-xs ${highlight ? 'text-cyan-600' : 'text-gray-500'}`}>{label}</span>
-      <span className={`text-sm font-semibold ${highlight ? 'text-cyan-700' : 'text-gray-800'}`}>{value}</span>
+    <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg ${baseClass}`}>
+      <span className={`text-xs ${labelClass}`}>{label}</span>
+      <span className={`text-sm font-semibold ${valueClass}`}>{value}</span>
       {subvalue && (
-        <span className={`text-xs ${highlight ? 'text-cyan-500' : 'text-gray-500'}`}>{subvalue}</span>
+        <span className={`text-xs ${subvalueClass}`}>{subvalue}</span>
+      )}
+      {forecast && (
+        <span className="text-[9px] text-indigo-400 uppercase tracking-wide">fcst</span>
       )}
     </div>
   )
