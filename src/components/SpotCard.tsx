@@ -144,11 +144,21 @@ export function SpotCard({
                     subvalue={`${conditions.wavePeriod.toFixed(0)}s`}
                   />
                 )}
-                <ConditionPill
-                  label="Wind"
-                  value={`${conditions.windSpeed.toFixed(0)}mph`}
-                  subvalue={degreesToDirection(conditions.windDirection)}
-                />
+                {/* Wind - use forecast when available for future dates */}
+                {waveForecast ? (
+                  <ConditionPill
+                    label="Wind"
+                    value={`${waveForecast.avgWindSpeed}mph`}
+                    subvalue={degreesToDirection(waveForecast.avgWindDirection)}
+                    forecast
+                  />
+                ) : (
+                  <ConditionPill
+                    label="Wind"
+                    value={`${conditions.windSpeed.toFixed(0)}mph`}
+                    subvalue={degreesToDirection(conditions.windDirection)}
+                  />
+                )}
                 {swellInfo && (
                   <ConditionPill
                     label="Swell"
@@ -158,6 +168,12 @@ export function SpotCard({
                 )}
                 {spitcastForecast && (
                   <SpitcastPill forecast={spitcastForecast} />
+                )}
+                {conditions.waterTemp && conditions.waterTemp > 0 && (
+                  <ConditionPill
+                    label="Water"
+                    value={`${conditions.waterTemp}°F`}
+                  />
                 )}
                 {bestTimeWindow && (
                   <ConditionPill

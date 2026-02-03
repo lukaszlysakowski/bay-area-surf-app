@@ -1,0 +1,36 @@
+{
+  "name": "Bay Area Surf Almanac",
+  "short_name": "Surf Almanac",
+  "description": "Real-time surf conditions and forecasts for Bay Area surf spots",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f0fdfa",
+  "theme_color": "#06b6d4",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/wave.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["weather", "sports"],
+  "shortcuts": [
+    {
+      "name": "Check Conditions",
+      "url": "/",
+      "description": "View current surf conditions"
+    }
+  ]
+}

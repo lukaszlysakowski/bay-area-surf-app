@@ -41,6 +41,8 @@ export interface SurfConditions {
   windDirection: number
   tideHeight: number
   tidePhase: 'rising' | 'falling' | 'high' | 'low'
+  waterTemp?: number // °F
+  airTemp?: number // °F
 }
 
 // Spot Configuration

@@ -129,6 +129,8 @@ function buildConditions(buoyData: BuoyData, tideData: TideData): SurfConditions
     windDirection: buoyData.windDirection,
     tideHeight: getCurrentTideHeight(tideData),
     tidePhase: getTidePhase(tideData),
+    waterTemp: buoyData.waterTemp,
+    airTemp: buoyData.airTemp,
   }
 }
 

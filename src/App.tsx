@@ -4,6 +4,12 @@ import { useAllDriveTimes } from './hooks/useDriveTime'
 import { usePreferences } from './hooks/usePreferences'
 import { useSpitcastForecasts } from './hooks/useSpitcast'
 import { useMarineForecast, getForecastForDate } from './hooks/useMarineForecast'
+import { useWeatherForecast, getWeatherForDate } from './hooks/useWeather'
+import { WeatherBar } from './components/WeatherBar'
+import { useDarkMode } from './hooks/useDarkMode'
+import { usePullToRefresh } from './hooks/usePullToRefresh'
+import { PullToRefreshIndicator } from './components/PullToRefresh'
+import { useQueryClient } from '@tanstack/react-query'
 import { SpotCard } from './components/SpotCard'
 import { MapView, useUserLocation } from './components/MapView'
 import { DateTabs, getDateForOption, formatDateDisplay, formatDateForAPI, getDateOptionForDate } from './components/DateTabs'
@@ -39,6 +45,17 @@ function App() {
   } = usePreferences()
 
   const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null)
+  const { isDark, toggleDark } = useDarkMode()
+  const queryClient = useQueryClient()
+
+  // Pull-to-refresh handler
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries()
+  }
+
+  const { isPulling, isRefreshing, progress, pullDistance } = usePullToRefresh({
+    onRefresh: handleRefresh,
+  })
   const [showTideCalendar, setShowTideCalendar] = useState(false)
   const [showWeekForecast, setShowWeekForecast] = useState(false)
   const [showSpotDetails, setShowSpotDetails] = useState(false)
@@ -93,6 +110,12 @@ function App() {
     if (!marineForecast) return null
     return getForecastForDate(marineForecast, spitcastDate)
   }, [marineForecast, spitcastDate])
+
+  // Fetch weather forecast
+  const { data: weatherForecast, isLoading: weatherLoading } = useWeatherForecast(37.76, -122.51, 7)
+  const weatherForDate = useMemo(() => {
+    return getWeatherForDate(weatherForecast, spitcastDate)
+  }, [weatherForecast, spitcastDate])
 
   const idealRange = getIdealWaveRange(surferType, skillLevel)
   const isToday = selectedDate === 'today' || selectedDate === 'now'
@@ -162,9 +185,17 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-teal-50">
+    <div className="min-h-screen bg-teal-50 dark:bg-slate-900 transition-colors">
+      {/* Pull to Refresh Indicator */}
+      <PullToRefreshIndicator
+        isPulling={isPulling}
+        isRefreshing={isRefreshing}
+        progress={progress}
+        pullDistance={pullDistance}
+      />
+
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-cyan-100 sticky top-0 z-50">
+      <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md shadow-sm border-b border-cyan-100 dark:border-slate-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
@@ -177,7 +208,7 @@ function App() {
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-cyan-500 bg-clip-text text-transparent font-[Outfit]">
                   Bay Area Surf Almanac
                 </h1>
-                <p className="text-gray-500 text-sm mt-0.5 flex items-center gap-2">
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-0.5 flex items-center gap-2">
                   {formatDateDisplay(selectedDate)}
                   {isForecastLoading && !isToday && (
                     <span className="inline-flex items-center gap-1 text-indigo-500">
@@ -196,13 +227,13 @@ function App() {
             <DateTabs selected={selectedDate} onChange={setSelectedDate} />
 
             {/* View Toggle */}
-            <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
+            <div className="flex bg-gray-100 dark:bg-slate-700 rounded-xl p-1 gap-1">
               <button
                 onClick={() => setViewMode('list')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
                   viewMode === 'list'
-                    ? 'bg-white text-gray-800 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    ? 'bg-white dark:bg-slate-600 text-gray-800 dark:text-gray-100 shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-600'
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -237,12 +268,36 @@ function App() {
                 Split
               </button>
             </div>
+
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={toggleDark}
+              className="p-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-6">
+        {/* Weather Bar */}
+        <WeatherBar
+          weather={weatherForecast}
+          dayWeather={weatherForDate}
+          isLoading={weatherLoading}
+        />
+
         {/* Forecast Notice for Future Dates */}
         {!isToday && (
           <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-3 mb-4 flex items-center gap-2">
@@ -259,7 +314,7 @@ function App() {
         )}
 
         {/* Preferences Bar */}
-        <div className="bg-white rounded-2xl shadow-sm p-4 mb-6 border border-gray-100/80">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 mb-6 border border-gray-100/80 dark:border-slate-700">
           <div className="flex flex-wrap gap-4 items-center">
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">

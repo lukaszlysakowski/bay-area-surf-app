@@ -16,6 +16,12 @@ export interface MarineForecastHour {
   swellDirection: number    // degrees
   windWaveHeight: number    // meters
   windWaveHeightFt: number  // feet
+  // Wind data
+  windSpeed: number         // m/s
+  windSpeedMph: number      // mph
+  windDirection: number     // degrees
+  windGusts: number         // m/s
+  windGustsMph: number      // mph
 }
 
 export interface MarineDayForecast {
@@ -28,6 +34,10 @@ export interface MarineDayForecast {
   dominantPeriod: number    // seconds
   dominantDirection: number // degrees
   bestHour: MarineForecastHour | null
+  // Wind aggregates
+  avgWindSpeed: number      // mph
+  maxWindSpeed: number      // mph
+  avgWindDirection: number  // degrees
 }
 
 export interface MarineForecast {
@@ -52,6 +62,9 @@ interface OpenMeteoResponse {
     swell_wave_period: string
     swell_wave_direction: string
     wind_wave_height: string
+    wind_speed_10m: string
+    wind_direction_10m: string
+    wind_gusts_10m: string
   }
   hourly: {
     time: string[]
@@ -62,6 +75,9 @@ interface OpenMeteoResponse {
     swell_wave_period: (number | null)[]
     swell_wave_direction: (number | null)[]
     wind_wave_height: (number | null)[]
+    wind_speed_10m: (number | null)[]
+    wind_direction_10m: (number | null)[]
+    wind_gusts_10m: (number | null)[]
   }
 }
 
@@ -87,6 +103,9 @@ export async function fetchMarineForecast(
       'swell_wave_period',
       'swell_wave_direction',
       'wind_wave_height',
+      'wind_speed_10m',
+      'wind_direction_10m',
+      'wind_gusts_10m',
     ].join(','),
     forecast_days: days.toString(),
     timezone: 'America/Los_Angeles',
@@ -121,6 +140,9 @@ function parseMarineResponse(data: OpenMeteoResponse): MarineForecast {
     const swellHeight = data.hourly.swell_wave_height[i] ?? 0
     const windWaveHeight = data.hourly.wind_wave_height[i] ?? 0
 
+    const windSpeed = data.hourly.wind_speed_10m?.[i] ?? 0
+    const windGusts = data.hourly.wind_gusts_10m?.[i] ?? 0
+
     hourlyData.push({
       time: new Date(data.hourly.time[i]),
       waveHeight,
@@ -133,6 +155,11 @@ function parseMarineResponse(data: OpenMeteoResponse): MarineForecast {
       swellDirection: data.hourly.swell_wave_direction[i] ?? 0,
       windWaveHeight,
       windWaveHeightFt: windWaveHeight * METERS_TO_FEET,
+      windSpeed,
+      windSpeedMph: windSpeed * 2.237, // m/s to mph
+      windDirection: data.hourly.wind_direction_10m?.[i] ?? 0,
+      windGusts,
+      windGustsMph: windGusts * 2.237,
     })
   }
 
@@ -186,12 +213,17 @@ function aggregateDayForecast(date: Date, hours: MarineForecastHour[]): MarineDa
       dominantPeriod: 0,
       dominantDirection: 0,
       bestHour: null,
+      avgWindSpeed: 0,
+      maxWindSpeed: 0,
+      avgWindDirection: 0,
     }
   }
 
   const heights = surfHours.map((h) => h.waveHeightFt)
   const periods = surfHours.map((h) => h.wavePeriod)
   const directions = surfHours.map((h) => h.waveDirection)
+  const windSpeeds = surfHours.map((h) => h.windSpeedMph)
+  const windDirections = surfHours.map((h) => h.windDirection)
 
   // Find best hour (highest swell with good period)
   let bestHour = surfHours[0]
@@ -215,6 +247,9 @@ function aggregateDayForecast(date: Date, hours: MarineForecastHour[]): MarineDa
     dominantPeriod: periods.reduce((a, b) => a + b, 0) / periods.length,
     dominantDirection: Math.round(directions.reduce((a, b) => a + b, 0) / directions.length),
     bestHour,
+    avgWindSpeed: Math.round(windSpeeds.reduce((a, b) => a + b, 0) / windSpeeds.length),
+    maxWindSpeed: Math.round(Math.max(...windSpeeds)),
+    avgWindDirection: Math.round(windDirections.reduce((a, b) => a + b, 0) / windDirections.length),
   }
 }
 
