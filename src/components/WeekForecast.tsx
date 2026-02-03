@@ -2,6 +2,8 @@ import { useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { fetchTideData } from '../lib/api/tides'
 import { analyzeWeek, getNextDays, formatDateForAPI } from '../lib/forecast'
+import { useSpotMarineForecast } from '../hooks/useMarineForecast'
+import { formatWaveDirection } from '../lib/api/openmeteo'
 import type { SpotConfig, TideData, BuoyData } from '../types'
 
 interface WeekForecastProps {
@@ -28,7 +30,10 @@ export function WeekForecast({ spot, currentBuoyData, onClose, onSelectDate }: W
     })),
   })
 
-  const isLoading = tideQueries.some((q) => q.isLoading)
+  // Fetch marine forecast (wave predictions) from Open-Meteo
+  const { data: marineForecast, isLoading: marineLoading } = useSpotMarineForecast(spot.coordinates)
+
+  const isLoading = tideQueries.some((q) => q.isLoading) || marineLoading
 
   // Build tide data map
   const tideDataMap = useMemo(() => {
@@ -48,7 +53,22 @@ export function WeekForecast({ spot, currentBuoyData, onClose, onSelectDate }: W
     return analyzeWeek(tideDataMap, spot)
   }, [tideDataMap, spot])
 
-  // Current wave data for the chart baseline
+  // Build wave data from marine forecast for each day
+  const waveDataByDay = useMemo(() => {
+    if (!marineForecast) return null
+    const map = new Map<string, { height: number; period: number; direction: number }>()
+    for (const day of marineForecast.days) {
+      const dateKey = day.date.toDateString()
+      map.set(dateKey, {
+        height: day.avgWaveHeight,
+        period: day.dominantPeriod,
+        direction: day.dominantDirection,
+      })
+    }
+    return map
+  }, [marineForecast])
+
+  // Current wave data for fallback
   const currentWaveHeight = currentBuoyData?.waveHeight ?? 3
   const currentPeriod = currentBuoyData?.wavePeriod ?? 10
 
@@ -109,9 +129,17 @@ export function WeekForecast({ spot, currentBuoyData, onClose, onSelectDate }: W
 
           {/* Swell Chart */}
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Wave Height Trend</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              Wave Height Forecast
+              {marineForecast && (
+                <span className="text-xs font-normal text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  Open-Meteo
+                </span>
+              )}
+            </h3>
             <SwellChart
               days={weekAnalysis?.days ?? []}
+              waveDataByDay={waveDataByDay}
               baseHeight={currentWaveHeight}
               basePeriod={currentPeriod}
             />
@@ -152,6 +180,13 @@ export function WeekForecast({ spot, currentBuoyData, onClose, onSelectDate }: W
                     <p className="text-lg my-1" title={day.moonPhase.name}>
                       {day.moonPhase.emoji}
                     </p>
+
+                    {/* Wave Height from forecast */}
+                    {waveDataByDay?.get(day.date.toDateString()) && (
+                      <div className="text-xs text-cyan-600 font-medium">
+                        {waveDataByDay.get(day.date.toDateString())!.height.toFixed(1)}ft
+                      </div>
+                    )}
 
                     {/* Score */}
                     <div className={`text-lg font-bold ${getScoreColor(day.score)}`}>
@@ -216,6 +251,17 @@ export function WeekForecast({ spot, currentBuoyData, onClose, onSelectDate }: W
                       )}
                     </div>
                     <div className="flex items-center gap-4">
+                      {/* Wave forecast */}
+                      {waveDataByDay?.get(day.date.toDateString()) && (
+                        <div className="text-right px-2">
+                          <span className="text-sm font-semibold text-cyan-700">
+                            {waveDataByDay.get(day.date.toDateString())!.height.toFixed(1)}ft
+                          </span>
+                          <p className="text-xs text-gray-400">
+                            {waveDataByDay.get(day.date.toDateString())!.period.toFixed(0)}s {formatWaveDirection(waveDataByDay.get(day.date.toDateString())!.direction)}
+                          </p>
+                        </div>
+                      )}
                       {day.bestTimeWindow ? (
                         <div className="text-right">
                           <span className={`text-sm font-semibold ${isBestDay ? 'text-emerald-700' : 'text-gray-800'}`}>
@@ -238,8 +284,11 @@ export function WeekForecast({ spot, currentBuoyData, onClose, onSelectDate }: W
 
           {/* Note about forecast accuracy */}
           <p className="text-xs text-gray-400 text-center mt-6">
-            Tide predictions are accurate. Wave forecast is estimated based on current swell patterns.
-            Check back daily for updated conditions.
+            {marineForecast ? (
+              <>Wave forecast from Open-Meteo Marine API. Tide predictions from NOAA CO-OPS.</>
+            ) : (
+              <>Tide predictions are accurate. Wave forecast is estimated based on current swell patterns.</>
+            )}
           </p>
         </div>
       )}
@@ -250,24 +299,43 @@ export function WeekForecast({ spot, currentBuoyData, onClose, onSelectDate }: W
 // Swell Chart Component
 interface SwellChartProps {
   days: Array<{ date: Date; score: number; dayName: string }>
+  waveDataByDay?: Map<string, { height: number; period: number; direction: number }> | null
   baseHeight: number
   basePeriod: number
 }
 
-function SwellChart({ days, baseHeight, basePeriod }: SwellChartProps) {
+function SwellChart({ days, waveDataByDay, baseHeight, basePeriod }: SwellChartProps) {
   const width = 700
   const height = 150
   const padding = { top: 20, right: 20, bottom: 30, left: 40 }
 
-  // Generate wave heights with some variance based on score
+  // Use actual wave forecast data if available, otherwise fall back to estimates
   const waveData = days.map((day, i) => {
-    // Add some realistic variance (±30% based on score)
+    const dateKey = day.date.toDateString()
+    const forecastData = waveDataByDay?.get(dateKey)
+
+    if (forecastData) {
+      // Use real forecast data
+      return {
+        day: day.dayName,
+        height: forecastData.height,
+        period: forecastData.period,
+        direction: forecastData.direction,
+        score: day.score,
+        isActual: true,
+      }
+    }
+
+    // Fall back to estimated data
     const variance = (day.score - 50) / 100
-    const height = baseHeight * (1 + variance * 0.5 + (Math.sin(i * 0.8) * 0.2))
+    const estimatedHeight = baseHeight * (1 + variance * 0.5 + (Math.sin(i * 0.8) * 0.2))
     return {
       day: day.dayName,
-      height: Math.max(0.5, height),
+      height: Math.max(0.5, estimatedHeight),
+      period: basePeriod,
+      direction: 0,
       score: day.score,
+      isActual: false,
     }
   })
 
@@ -336,9 +404,18 @@ function SwellChart({ days, baseHeight, basePeriod }: SwellChartProps) {
             cy={yScale(d.height)}
             r="5"
             fill="white"
-            stroke="#6366f1"
+            stroke={d.isActual ? '#10b981' : '#6366f1'}
             strokeWidth="2"
           />
+          {/* Wave height label */}
+          <text
+            x={xScale(i)}
+            y={yScale(d.height) - 10}
+            textAnchor="middle"
+            className="text-[10px] fill-gray-600 font-semibold"
+          >
+            {d.height.toFixed(1)}ft
+          </text>
           <text
             x={xScale(i)}
             y={height - 8}
@@ -350,14 +427,16 @@ function SwellChart({ days, baseHeight, basePeriod }: SwellChartProps) {
         </g>
       ))}
 
-      {/* Current period indicator */}
+      {/* Period indicator - show average if using actual data */}
       <text
         x={width - padding.right}
         y={padding.top}
         textAnchor="end"
         className="text-[10px] fill-gray-400"
       >
-        Period: {basePeriod.toFixed(0)}s
+        Avg Period: {waveData.length > 0 && waveData[0].isActual
+          ? (waveData.reduce((sum, d) => sum + d.period, 0) / waveData.length).toFixed(0)
+          : basePeriod.toFixed(0)}s
       </text>
     </svg>
   )
