@@ -87,7 +87,7 @@ export function round(value: number, decimals: number): number {
 export function getRatingColorClass(rating: string): string {
   switch (rating) {
     case 'Excellent':
-      return 'bg-emerald-500 text-white'
+      return 'bg-emerald-600 text-white'
     case 'Good':
       return 'bg-blue-500 text-white'
     case 'Fair':
@@ -105,7 +105,7 @@ export function getRatingColorClass(rating: string): string {
 export function getRatingColor(rating: string): string {
   switch (rating) {
     case 'Excellent':
-      return '#10b981'
+      return '#2d9c6e'
     case 'Good':
       return '#3b82f6'
     case 'Fair':

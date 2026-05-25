@@ -172,11 +172,21 @@ function App() {
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-cyan-50 to-teal-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center shadow-lg shadow-cyan-500/30 mx-auto wave-animation">
-            <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
+          <div className="w-12 h-12 rounded-[4px] bg-[#1A1C1E] flex items-center justify-center mx-auto wave-animation">
+            <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none">
+              <path d="M0.5,15.5 C2,7 6,2.5 7.75,2.5 C9.5,2.5 11,14 12,14 C13,14 14.5,2.5 16.25,2.5 C18,2.5 22,7 23.5,15.5" stroke="white" strokeWidth="1" strokeLinecap="round"/>
+              <line x1="0.5" y1="15.5" x2="23.5" y2="15.5" stroke="white" strokeWidth="1"/>
+              <rect x="7" y="2.5" width="1.5" height="13" fill="white" rx="0.25"/>
+              <rect x="5.25" y="5.5" width="5" height="0.75" fill="white"/>
+              <rect x="5.25" y="9.25" width="5" height="0.75" fill="white"/>
+              <rect x="15.5" y="2.5" width="1.5" height="13" fill="white" rx="0.25"/>
+              <rect x="13.75" y="5.5" width="5" height="0.75" fill="white"/>
+              <rect x="13.75" y="9.25" width="5" height="0.75" fill="white"/>
+              <rect x="0" y="17" width="24" height="1.5" rx="0.75" fill="white" fillOpacity="0.4"/>
+              <rect x="2" y="19.5" width="20" height="1.25" rx="0.625" fill="white" fillOpacity="0.22"/>
+              <rect x="5" y="22" width="14" height="1" rx="0.5" fill="white" fillOpacity="0.12"/>
             </svg>
           </div>
         </div>
@@ -185,7 +195,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-teal-50 dark:bg-slate-900 transition-colors">
+    <div className="min-h-screen transition-colors">
       {/* Pull to Refresh Indicator */}
       <PullToRefreshIndicator
         isPulling={isPulling}
@@ -195,20 +205,41 @@ function App() {
       />
 
       {/* Header */}
-      <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md shadow-sm border-b border-cyan-100 dark:border-slate-700 sticky top-0 z-50">
+      <header className="bg-white border-b border-[#1A1C1E]/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
+              <div className="w-10 h-10 rounded-[4px] bg-[#1A1C1E] flex items-center justify-center">
+                {/* Golden Gate Bridge in fog */}
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+                  {/* Suspension cable */}
+                  <path
+                    d="M0.5,15.5 C2,7 6,2.5 7.75,2.5 C9.5,2.5 11,14 12,14 C13,14 14.5,2.5 16.25,2.5 C18,2.5 22,7 23.5,15.5"
+                    stroke="white" strokeWidth="1" strokeLinecap="round"
+                  />
+                  {/* Road deck */}
+                  <line x1="0.5" y1="15.5" x2="23.5" y2="15.5" stroke="white" strokeWidth="1"/>
+                  {/* Left tower */}
+                  <rect x="7" y="2.5" width="1.5" height="13" fill="white" rx="0.25"/>
+                  {/* Left tower portal beams */}
+                  <rect x="5.25" y="5.5" width="5" height="0.75" fill="white"/>
+                  <rect x="5.25" y="9.25" width="5" height="0.75" fill="white"/>
+                  {/* Right tower */}
+                  <rect x="15.5" y="2.5" width="1.5" height="13" fill="white" rx="0.25"/>
+                  {/* Right tower portal beams */}
+                  <rect x="13.75" y="5.5" width="5" height="0.75" fill="white"/>
+                  <rect x="13.75" y="9.25" width="5" height="0.75" fill="white"/>
+                  {/* Fog wisps */}
+                  <rect x="0" y="17" width="24" height="1.5" rx="0.75" fill="white" fillOpacity="0.4"/>
+                  <rect x="2" y="19.5" width="20" height="1.25" rx="0.625" fill="white" fillOpacity="0.22"/>
+                  <rect x="5" y="22" width="14" height="1" rx="0.5" fill="white" fillOpacity="0.12"/>
                 </svg>
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-cyan-500 bg-clip-text text-transparent font-[Outfit]">
+                <h1 className="text-2xl font-bold text-[#1A1C1E]">
                   Bay Area Surf Almanac
                 </h1>
-                <p className="text-gray-500 dark:text-gray-400 text-sm mt-0.5 flex items-center gap-2">
+                <p className="text-[#6C7278] text-sm mt-0.5 flex items-center gap-2 font-label">
                   {formatDateDisplay(selectedDate)}
                   {isForecastLoading && !isToday && (
                     <span className="inline-flex items-center gap-1 text-indigo-500">
@@ -227,13 +258,13 @@ function App() {
             <DateTabs selected={selectedDate} onChange={setSelectedDate} />
 
             {/* View Toggle */}
-            <div className="flex bg-gray-100 dark:bg-slate-700 rounded-xl p-1 gap-1">
+            <div className="flex bg-[#EDE9E4] rounded-[4px] p-1 gap-1">
               <button
                 onClick={() => setViewMode('list')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-[2px] text-sm font-medium transition-all flex items-center gap-1.5 ${
                   viewMode === 'list'
-                    ? 'bg-white dark:bg-slate-600 text-gray-800 dark:text-gray-100 shadow-sm'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-600'
+                    ? 'bg-white text-[#1A1C1E]'
+                    : 'text-[#6C7278] hover:text-[#1A1C1E] hover:bg-[#F7F5F2]'
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -243,10 +274,10 @@ function App() {
               </button>
               <button
                 onClick={() => setViewMode('map')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-[2px] text-sm font-medium transition-all flex items-center gap-1.5 ${
                   viewMode === 'map'
-                    ? 'bg-white text-gray-800 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    ? 'bg-white text-[#1A1C1E]'
+                    : 'text-[#6C7278] hover:text-[#1A1C1E] hover:bg-[#F7F5F2]'
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -256,10 +287,10 @@ function App() {
               </button>
               <button
                 onClick={() => setViewMode('split')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all hidden md:flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-[2px] text-sm font-medium transition-all hidden md:flex items-center gap-1.5 ${
                   viewMode === 'split'
-                    ? 'bg-white text-gray-800 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    ? 'bg-white text-[#1A1C1E]'
+                    : 'text-[#6C7278] hover:text-[#1A1C1E] hover:bg-[#F7F5F2]'
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -272,7 +303,7 @@ function App() {
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleDark}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+              className="p-2 rounded-[2px] bg-[#EDE9E4] text-[#6C7278] hover:bg-[#1A1C1E] hover:text-white transition-colors"
               title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {isDark ? (
@@ -300,12 +331,12 @@ function App() {
 
         {/* Forecast Notice for Future Dates */}
         {!isToday && (
-          <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-3 mb-4 flex items-center gap-2">
-            <span className="text-indigo-500">📊</span>
-            <p className="text-sm text-indigo-800">
+          <div className="bg-white border border-[#1A1C1E]/10 rounded-[4px] px-4 py-3 mb-4 flex items-center gap-2">
+            <span className="text-[#B8422E]">📊</span>
+            <p className="text-sm text-[#1A1C1E]">
               <strong>Forecast Mode:</strong> Showing predicted waves from Open-Meteo and tide predictions for <strong>{formatDateDisplay(selectedDate)}</strong>.
               {waveForecastForDate && (
-                <span className="ml-1 text-indigo-600">
+                <span className="ml-1 text-[#B8422E]">
                   Expected {waveForecastForDate.minWaveHeight.toFixed(0)}-{waveForecastForDate.maxWaveHeight.toFixed(0)}ft waves.
                 </span>
               )}
@@ -314,16 +345,16 @@ function App() {
         )}
 
         {/* Preferences Bar */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 mb-6 border border-gray-100/80 dark:border-slate-700">
-          <div className="flex flex-wrap gap-4 items-center">
+        <div className="bg-white rounded-[8px] p-4 mb-6 border border-[#1A1C1E]/10">
+          <div className="flex flex-wrap gap-4 items-end">
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block text-xs font-medium text-[#6C7278] mb-1 font-label uppercase tracking-widest">
                 Board
               </label>
               <select
                 value={surferType}
                 onChange={(e) => setSurferType(e.target.value as typeof surferType)}
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="px-3 py-2 border border-[#1A1C1E]/20 rounded-[4px] text-sm bg-white text-[#1A1C1E] focus:outline-none"
               >
                 <option value="longboard">Longboard</option>
                 <option value="mediumboard">Mid-length</option>
@@ -331,13 +362,13 @@ function App() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block text-xs font-medium text-[#6C7278] mb-1 font-label uppercase tracking-widest">
                 Level
               </label>
               <select
                 value={skillLevel}
                 onChange={(e) => setSkillLevel(e.target.value as typeof skillLevel)}
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="px-3 py-2 border border-[#1A1C1E]/20 rounded-[4px] text-sm bg-white text-[#1A1C1E] focus:outline-none"
               >
                 <option value="beginner">Beginner</option>
                 <option value="advanced">Intermediate</option>
@@ -348,13 +379,13 @@ function App() {
             {/* Sort Mode */}
             {userLocation && driveTimes && driveTimes.size > 0 && (
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">
+                <label className="block text-xs font-medium text-[#6C7278] mb-1 font-label uppercase tracking-widest">
                   Sort by
                 </label>
                 <select
                   value={sortMode}
                   onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
-                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  className="px-3 py-2 border border-[#1A1C1E]/20 rounded-[4px] text-sm bg-white text-[#1A1C1E] focus:outline-none"
                 >
                   <option value="score">Best Conditions</option>
                   <option value="distance">Nearest</option>
@@ -365,13 +396,13 @@ function App() {
             {/* Search Radius Filter */}
             {userLocation && driveTimes && driveTimes.size > 0 && (
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">
+                <label className="block text-xs font-medium text-[#6C7278] mb-1 font-label uppercase tracking-widest">
                   Max Distance
                 </label>
                 <select
                   value={searchRadius}
                   onChange={(e) => setSearchRadius(e.target.value as typeof searchRadius)}
-                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  className="px-3 py-2 border border-[#1A1C1E]/20 rounded-[4px] text-sm bg-white text-[#1A1C1E] focus:outline-none"
                 >
                   <option value="all">All spots</option>
                   <option value="15">Within 15 min</option>
@@ -389,7 +420,7 @@ function App() {
                   setForecastSpot(bestSpot ? SURF_SPOTS.find(s => s.id === bestSpot.id) || SURF_SPOTS[0] : SURF_SPOTS[0])
                   setShowWeekForecast(true)
                 }}
-                className="px-3 py-2 text-sm bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors flex items-center gap-1.5 border border-indigo-100"
+                className="px-3 py-2 text-sm bg-[#F7F5F2] text-[#1A1C1E] hover:bg-[#EDE9E4] rounded-[4px] transition-colors flex items-center gap-1.5 border border-[#1A1C1E]/15"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -398,7 +429,7 @@ function App() {
               </button>
               <button
                 onClick={() => setShowTideCalendar(true)}
-                className="px-3 py-2 text-sm bg-cyan-50 text-cyan-700 hover:bg-cyan-100 rounded-lg transition-colors flex items-center gap-1.5 border border-cyan-100"
+                className="px-3 py-2 text-sm bg-[#F7F5F2] text-[#1A1C1E] hover:bg-[#EDE9E4] rounded-[4px] transition-colors flex items-center gap-1.5 border border-[#1A1C1E]/15"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -408,12 +439,12 @@ function App() {
             </div>
 
             <div className="flex items-center gap-2 ml-auto">
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-[#6C7278] font-label">
                 Ideal: {idealRange.min}-{idealRange.max}ft
               </span>
               {userLocation ? (
                 <div className="flex items-center gap-1">
-                  <span className="px-3 py-2 text-sm bg-emerald-50 text-emerald-700 rounded-lg flex items-center gap-1.5 border border-emerald-100">
+                  <span className="px-3 py-2 text-sm bg-[#F7F5F2] text-[#1A1C1E] rounded-[4px] flex items-center gap-1.5 border border-[#1A1C1E]/15">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
@@ -421,7 +452,7 @@ function App() {
                   </span>
                   <button
                     onClick={handleClearLocation}
-                    className="p-2 text-sm text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 text-sm text-[#6C7278] hover:text-[#1A1C1E] hover:bg-[#EDE9E4] rounded-[2px] transition-colors"
                     title="Clear saved location"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -433,7 +464,7 @@ function App() {
                 <button
                   onClick={requestLocation}
                   disabled={locationLoading}
-                  className="px-4 py-2 text-sm text-cyan-700 bg-cyan-50 hover:bg-cyan-100 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5 border border-cyan-100"
+                  className="px-4 py-2 text-sm text-[#1A1C1E] bg-[#F7F5F2] hover:bg-[#EDE9E4] rounded-[4px] transition-colors disabled:opacity-50 flex items-center gap-1.5 border border-[#1A1C1E]/15"
                 >
                   {locationLoading ? (
                     <>
@@ -470,23 +501,32 @@ function App() {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="relative">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center shadow-lg shadow-cyan-500/30 mx-auto">
-                  <svg className="w-8 h-8 text-white wave-animation" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
+                <div className="w-16 h-16 rounded-[4px] bg-[#1A1C1E] flex items-center justify-center mx-auto wave-animation">
+                  <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none">
+                    <path d="M0.5,15.5 C2,7 6,2.5 7.75,2.5 C9.5,2.5 11,14 12,14 C13,14 14.5,2.5 16.25,2.5 C18,2.5 22,7 23.5,15.5" stroke="white" strokeWidth="1" strokeLinecap="round"/>
+                    <line x1="0.5" y1="15.5" x2="23.5" y2="15.5" stroke="white" strokeWidth="1"/>
+                    <rect x="7" y="2.5" width="1.5" height="13" fill="white" rx="0.25"/>
+                    <rect x="5.25" y="5.5" width="5" height="0.75" fill="white"/>
+                    <rect x="5.25" y="9.25" width="5" height="0.75" fill="white"/>
+                    <rect x="15.5" y="2.5" width="1.5" height="13" fill="white" rx="0.25"/>
+                    <rect x="13.75" y="5.5" width="5" height="0.75" fill="white"/>
+                    <rect x="13.75" y="9.25" width="5" height="0.75" fill="white"/>
+                    <rect x="0" y="17" width="24" height="1.5" rx="0.75" fill="white" fillOpacity="0.4"/>
+                    <rect x="2" y="19.5" width="20" height="1.25" rx="0.625" fill="white" fillOpacity="0.22"/>
+                    <rect x="5" y="22" width="14" height="1" rx="0.5" fill="white" fillOpacity="0.12"/>
                   </svg>
                 </div>
-                <div className="absolute inset-0 rounded-full bg-cyan-400/20 animate-ping"></div>
               </div>
-              <p className="mt-4 text-gray-600 font-medium">
+              <p className="mt-4 text-[#1A1C1E] font-medium">
                 {isToday ? 'Checking the waves' : 'Loading forecast'}...
               </p>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-[#6C7278] mt-1 font-label">
                 Fetching buoy & tide data
               </p>
             </div>
           </div>
         ) : isError ? (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <div className="bg-white border border-[#ef4444]/30 rounded-[8px] p-4">
             <p className="text-red-600 font-medium">Error loading surf data</p>
             {errors.map((err, i) => (
               <p key={i} className="text-red-500 text-sm mt-1">{err?.message}</p>
@@ -497,26 +537,17 @@ function App() {
             {/* Best Spot Banner */}
             {bestSpot && viewMode !== 'map' && (
               <div
-                className="rounded-2xl p-5 text-white mb-6 cursor-pointer transition-all duration-300 hover:scale-[1.01] hover:shadow-xl relative overflow-hidden"
-                style={{
-                  background: `linear-gradient(135deg, ${getRatingColor(bestSpot.rating)} 0%, ${getRatingColor(bestSpot.rating)}dd 100%)`,
-                }}
+                className="rounded-[8px] p-5 text-white mb-6 cursor-pointer transition-all duration-300 relative overflow-hidden"
+                style={{ backgroundColor: getRatingColor(bestSpot.rating) }}
                 onClick={() => handleSpotSelect(bestSpot.id)}
               >
-                {/* Decorative wave pattern */}
-                <div className="absolute top-0 right-0 w-64 h-64 opacity-10">
-                  <svg viewBox="0 0 200 200" className="w-full h-full">
-                    <path d="M0,100 Q50,50 100,100 T200,100 T300,100" fill="none" stroke="white" strokeWidth="40" />
-                    <path d="M0,150 Q50,100 100,150 T200,150 T300,150" fill="none" stroke="white" strokeWidth="30" />
-                  </svg>
-                </div>
                 <div className="flex items-start justify-between relative z-10">
                   <div>
-                    <p className="text-sm opacity-90 mb-1 flex items-center gap-2">
-                      <span className="inline-block w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                    <p className="text-sm opacity-80 mb-1 flex items-center gap-2 font-label uppercase tracking-widest">
+                      <span className="inline-block w-1.5 h-1.5 bg-white"></span>
                       {isToday ? 'Best spot for you right now' : `Best spot for ${formatDateDisplay(selectedDate)}`}
                     </p>
-                    <h2 className="text-2xl font-bold font-[Outfit] drop-shadow-sm">{bestSpot.name}</h2>
+                    <h2 className="text-2xl font-bold">{bestSpot.name}</h2>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-sm opacity-90">{bestSpot.region}</span>
                       {driveTimes?.get(bestSpot.id) && (
@@ -555,7 +586,7 @@ function App() {
               {/* Map View */}
               {(viewMode === 'map' || viewMode === 'split') && (
                 <div className={viewMode === 'map' ? 'mb-6' : ''}>
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="bg-white rounded-[8px] border border-[#1A1C1E]/10 overflow-hidden">
                     <MapView
                       spots={mapSpots}
                       userLocation={userLocation ?? undefined}
@@ -566,18 +597,18 @@ function App() {
                   </div>
 
                   {/* Map Legend */}
-                  <div className="flex items-center justify-center gap-4 mt-3 text-xs text-gray-500">
+                  <div className="flex items-center justify-center gap-4 mt-3 text-xs text-[#6C7278] font-label">
                     <span className="flex items-center gap-1">
-                      <span className="w-3 h-3 rounded-full bg-emerald-500"></span> Excellent
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#2d9c6e' }}></span> Excellent
                     </span>
                     <span className="flex items-center gap-1">
-                      <span className="w-3 h-3 rounded-full bg-blue-500"></span> Good
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Good
                     </span>
                     <span className="flex items-center gap-1">
-                      <span className="w-3 h-3 rounded-full bg-amber-500"></span> Fair
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Fair
                     </span>
                     <span className="flex items-center gap-1">
-                      <span className="w-3 h-3 rounded-full bg-red-500"></span> Poor
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> Poor
                     </span>
                   </div>
                 </div>
@@ -587,24 +618,24 @@ function App() {
               {(viewMode === 'list' || viewMode === 'split') && (
                 <div className={viewMode === 'split' ? 'max-h-[600px] overflow-y-auto pr-2' : ''}>
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-800">
+                    <h2 className="text-lg font-semibold text-[#1A1C1E]">
                       {sortMode === 'distance' ? 'Nearest Spots' : 'All Spots Ranked'}
                       {searchRadius !== 'all' && ` (within ${searchRadius} min)`}
                     </h2>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-[#6C7278] font-label">
                       {filteredSpots.length} spot{filteredSpots.length !== 1 ? 's' : ''}
                     </span>
                   </div>
                   <div className="space-y-3">
                     {filteredSpots.length === 0 ? (
-                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
-                        <p className="text-gray-600 font-medium">No spots within {searchRadius} minutes</p>
-                        <p className="text-gray-500 text-sm mt-1">
+                      <div className="bg-[#F7F5F2] border border-[#1A1C1E]/10 rounded-[8px] p-6 text-center">
+                        <p className="text-[#1A1C1E] font-medium">No spots within {searchRadius} minutes</p>
+                        <p className="text-[#6C7278] text-sm mt-1">
                           Try increasing the distance or selecting "All spots"
                         </p>
                         <button
                           onClick={() => setSearchRadius('all')}
-                          className="mt-3 px-4 py-2 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-600 transition-colors"
+                          className="mt-3 px-4 py-2 bg-[#1A1C1E] text-white rounded-[4px] text-sm font-medium hover:bg-[#B8422E] transition-colors"
                         >
                           Show all spots
                         </button>
@@ -614,7 +645,7 @@ function App() {
                         <div
                           key={spot.id}
                           id={`spot-${spot.id}`}
-                          className={selectedSpotId === spot.id ? 'ring-2 ring-cyan-500 rounded-xl' : ''}
+                          className={selectedSpotId === spot.id ? 'outline outline-2 outline-[#B8422E] rounded-[8px]' : ''}
                         >
                           <SpotCard
                             spot={spot}
@@ -644,7 +675,7 @@ function App() {
 
             {/* Data Source Attribution */}
             <div className="text-center py-8 mt-4">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100/80 text-xs text-gray-500">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-[4px] bg-[#EDE9E4] text-xs text-[#6C7278] font-label">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -658,9 +689,9 @@ function App() {
       {/* Modal Loading Fallback */}
       <Suspense fallback={
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white rounded-xl p-6 shadow-xl">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500 mx-auto"></div>
-            <p className="mt-3 text-gray-500 text-sm">Loading...</p>
+          <div className="bg-white rounded-[8px] p-6 border border-[#1A1C1E]/10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1A1C1E] mx-auto"></div>
+            <p className="mt-3 text-[#6C7278] text-sm font-label">Loading...</p>
           </div>
         </div>
       }>

@@ -94,7 +94,6 @@ export function MapView({
           background: #3b82f6;
           border: 3px solid white;
           border-radius: 50%;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         "></div>
       `
 
@@ -128,7 +127,7 @@ export function MapView({
           font-size: ${isSelected ? '16px' : '14px'};
           cursor: pointer;
           border: ${isSelected ? '3px' : '2px'} solid white;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+          outline: ${isSelected ? '2px solid #B8422E' : 'none'};
           transition: all 0.2s ease;
         ">${index + 1}</div>
       `

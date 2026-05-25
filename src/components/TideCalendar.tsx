@@ -108,14 +108,14 @@ export function TideCalendar({ stationId, stationName, onClose, onSelectDate }: 
   const monthName = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden max-w-4xl w-full max-h-[90vh] flex flex-col">
+    <div className="bg-white rounded-[8px] border border-[#1A1C1E]/10 overflow-hidden max-w-4xl w-full max-h-[90vh] flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-cyan-500 to-cyan-600 text-white px-6 py-4 shrink-0">
+      <div className="bg-[#1A1C1E] text-white px-6 py-4 shrink-0">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold font-[Outfit]">Tide Calendar</h2>
+            <h2 className="text-xl font-bold">Tide Calendar</h2>
             {stationName && (
-              <p className="text-cyan-100 text-sm">{stationName}</p>
+              <p className="text-white/60 text-sm font-label">{stationName}</p>
             )}
           </div>
           {onClose && (
@@ -166,7 +166,7 @@ export function TideCalendar({ stationId, stationName, onClose, onSelectDate }: 
         {/* Days Grid */}
         {isLoading ? (
           <div className="h-64 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1A1C1E]"></div>
           </div>
         ) : (
           <div className="grid grid-cols-7 gap-1">
@@ -198,17 +198,17 @@ export function TideCalendar({ stationId, stationName, onClose, onSelectDate }: 
                     isPast
                       ? 'bg-gray-50 border-gray-100 opacity-50 cursor-not-allowed'
                       : isToday
-                      ? 'bg-cyan-50 border-cyan-300 cursor-pointer hover:shadow-md'
+                      ? 'bg-[#F7F5F2] border-[#B8422E]/40 cursor-pointer hover:border-[#B8422E]'
                       : isWeekend
-                      ? 'bg-blue-50/50 border-gray-100 cursor-pointer hover:border-blue-300 hover:shadow-sm'
-                      : 'bg-white border-gray-100 cursor-pointer hover:border-gray-300 hover:shadow-sm'
+                      ? 'bg-[#F7F5F2]/50 border-[#1A1C1E]/8 cursor-pointer hover:border-[#1A1C1E]/20'
+                      : 'bg-white border-[#1A1C1E]/8 cursor-pointer hover:border-[#1A1C1E]/20'
                   }`}
                 >
                   {/* Day number and moon */}
                   <div className="flex items-center justify-between">
                     <span
                       className={`text-sm font-medium ${
-                        isToday ? 'text-cyan-700' : 'text-gray-700'
+                        isToday ? 'text-[#B8422E]' : 'text-[#1A1C1E]'
                       }`}
                     >
                       {day}

@@ -73,13 +73,13 @@ export function WeekForecast({ spot, currentBuoyData, onClose, onSelectDate }: W
   const currentPeriod = currentBuoyData?.wavePeriod ?? 10
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden max-w-4xl w-full max-h-[90vh] flex flex-col">
+    <div className="bg-white rounded-[8px] border border-[#1A1C1E]/10 overflow-hidden max-w-4xl w-full max-h-[90vh] flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-4 shrink-0">
+      <div className="bg-[#1A1C1E] text-white px-6 py-4 shrink-0">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold font-[Outfit]">7-Day Forecast</h2>
-            <p className="text-indigo-100 text-sm">{spot.name}</p>
+            <h2 className="text-xl font-bold">7-Day Forecast</h2>
+            <p className="text-white/60 text-sm font-label">{spot.name}</p>
           </div>
           {onClose && (
             <button
@@ -97,7 +97,7 @@ export function WeekForecast({ spot, currentBuoyData, onClose, onSelectDate }: W
       {isLoading ? (
         <div className="h-96 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500 mx-auto"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1A1C1E] mx-auto"></div>
             <p className="mt-3 text-gray-500">Loading forecast...</p>
           </div>
         </div>
@@ -105,23 +105,23 @@ export function WeekForecast({ spot, currentBuoyData, onClose, onSelectDate }: W
         <div className="p-6 overflow-y-auto flex-1">
           {/* Best Day Banner */}
           {weekAnalysis?.bestDay && (
-            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-4 mb-6">
+            <div className="bg-[#F7F5F2] border border-[#1A1C1E]/10 rounded-[4px] p-4 mb-6">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white">
+                <div className="w-10 h-10 rounded-[4px] bg-[#2d9c6e] flex items-center justify-center text-white">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-emerald-600 font-medium">Best Day This Week</p>
-                  <p className="text-lg font-bold text-emerald-800">
+                  <p className="text-sm text-[#2d9c6e] font-medium font-label">Best Day This Week</p>
+                  <p className="text-lg font-bold text-[#1A1C1E]">
                     {weekAnalysis.bestDay.dayName}, {weekAnalysis.bestDay.dateStr}
                   </p>
-                  <p className="text-sm text-emerald-700 mt-1">{weekAnalysis.bestDayReason}</p>
+                  <p className="text-sm text-[#6C7278] mt-1">{weekAnalysis.bestDayReason}</p>
                 </div>
                 <div className="text-right">
-                  <div className="text-3xl font-bold text-emerald-600">{weekAnalysis.bestDay.score}</div>
-                  <div className="text-xs text-emerald-500">score</div>
+                  <div className="text-3xl font-bold text-[#2d9c6e]">{weekAnalysis.bestDay.score}</div>
+                  <div className="text-xs text-[#6C7278] font-label">score</div>
                 </div>
               </div>
             </div>
@@ -132,7 +132,7 @@ export function WeekForecast({ spot, currentBuoyData, onClose, onSelectDate }: W
             <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
               Wave Height Forecast
               {marineForecast && (
-                <span className="text-xs font-normal text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-normal text-[#2d9c6e] bg-[#F7F5F2] px-2 py-0.5 rounded-[2px] font-label border border-[#2d9c6e]/20">
                   Open-Meteo
                 </span>
               )}
@@ -157,21 +157,21 @@ export function WeekForecast({ spot, currentBuoyData, onClose, onSelectDate }: W
                   <button
                     key={i}
                     onClick={() => onSelectDate?.(day.date)}
-                    className={`rounded-xl p-3 text-center transition-all cursor-pointer hover:scale-[1.02] hover:shadow-md ${
+                    className={`rounded-[4px] p-3 text-center transition-all cursor-pointer hover:scale-[1.02] ${
                       isBestDay
-                        ? 'bg-emerald-50 border-2 border-emerald-300 shadow-sm'
+                        ? 'bg-[#F7F5F2] border-2 border-[#2d9c6e]/40'
                         : isToday
-                        ? 'bg-cyan-50 border border-cyan-200'
-                        : 'bg-gray-50 border border-gray-100 hover:border-gray-300'
+                        ? 'bg-[#F7F5F2] border border-[#1A1C1E]/20'
+                        : 'bg-white border border-[#1A1C1E]/10 hover:border-[#1A1C1E]/20'
                     }`}
                   >
-                    <p className={`text-xs font-medium ${
-                      isBestDay ? 'text-emerald-600' : isToday ? 'text-cyan-600' : 'text-gray-500'
+                    <p className={`text-xs font-medium font-label ${
+                      isBestDay ? 'text-[#2d9c6e]' : isToday ? 'text-[#B8422E]' : 'text-[#6C7278]'
                     }`}>
                       {day.dayName}
                     </p>
                     <p className={`text-sm font-bold ${
-                      isBestDay ? 'text-emerald-700' : 'text-gray-700'
+                      isBestDay ? 'text-[#2d9c6e]' : 'text-[#1A1C1E]'
                     }`}>
                       {day.date.getDate()}
                     </p>
@@ -183,7 +183,7 @@ export function WeekForecast({ spot, currentBuoyData, onClose, onSelectDate }: W
 
                     {/* Wave Height from forecast */}
                     {waveDataByDay?.get(day.date.toDateString()) && (
-                      <div className="text-xs text-cyan-600 font-medium">
+                      <div className="text-xs text-[#1A1C1E] font-medium font-label">
                         {waveDataByDay.get(day.date.toDateString())!.height.toFixed(1)}ft
                       </div>
                     )}
@@ -195,26 +195,26 @@ export function WeekForecast({ spot, currentBuoyData, onClose, onSelectDate }: W
 
                     {/* Best time window - more prominent */}
                     {day.bestTimeWindow ? (
-                      <div className={`mt-2 pt-2 border-t ${isBestDay ? 'border-emerald-200' : 'border-gray-200'}`}>
-                        <p className={`text-[10px] ${isBestDay ? 'text-emerald-600' : 'text-gray-500'}`}>
+                      <div className="mt-2 pt-2 border-t border-[#1A1C1E]/10">
+                        <p className="text-[10px] text-[#6C7278] font-label">
                           Best surf
                         </p>
-                        <p className={`text-xs font-semibold ${isBestDay ? 'text-emerald-700' : 'text-gray-700'}`}>
+                        <p className="text-xs font-semibold text-[#1A1C1E]">
                           {day.bestTimeWindow.start}
                         </p>
-                        <p className={`text-[10px] ${isBestDay ? 'text-emerald-600' : 'text-gray-500'}`}>
+                        <p className="text-[10px] text-[#6C7278] font-label">
                           to {day.bestTimeWindow.end}
                         </p>
                       </div>
                     ) : (
-                      <div className="mt-2 pt-2 border-t border-gray-200">
-                        <p className="text-[10px] text-gray-400">No data</p>
+                      <div className="mt-2 pt-2 border-t border-[#1A1C1E]/10">
+                        <p className="text-[10px] text-[#6C7278]">No data</p>
                       </div>
                     )}
 
                     {isBestDay && (
                       <div className="mt-2">
-                        <span className="inline-block px-1.5 py-0.5 bg-emerald-500 text-white text-[9px] font-medium rounded">
+                        <span className="inline-block px-1.5 py-0.5 bg-[#2d9c6e] text-white text-[9px] font-medium rounded-[2px] font-label uppercase tracking-wide">
                           BEST
                         </span>
                       </div>
@@ -235,17 +235,17 @@ export function WeekForecast({ spot, currentBuoyData, onClose, onSelectDate }: W
                   <button
                     key={i}
                     onClick={() => onSelectDate?.(day.date)}
-                    className={`w-full flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all hover:shadow-sm ${
-                      isBestDay ? 'bg-emerald-50 border border-emerald-200 hover:bg-emerald-100' : 'bg-gray-50 hover:bg-gray-100'
+                    className={`w-full flex items-center justify-between p-3 rounded-[4px] cursor-pointer transition-all ${
+                      isBestDay ? 'bg-[#F7F5F2] border border-[#2d9c6e]/20 hover:bg-[#EDE9E4]' : 'bg-white border border-[#1A1C1E]/8 hover:bg-[#F7F5F2]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className={`text-sm font-semibold w-12 ${isBestDay ? 'text-emerald-700' : 'text-gray-700'}`}>
+                      <span className={`text-sm font-semibold w-12 ${isBestDay ? 'text-[#2d9c6e]' : 'text-[#1A1C1E]'}`}>
                         {day.dayName}
                       </span>
-                      <span className="text-sm text-gray-500">{day.dateStr}</span>
+                      <span className="text-sm text-[#6C7278] font-label">{day.dateStr}</span>
                       {isBestDay && (
-                        <span className="px-2 py-0.5 bg-emerald-500 text-white text-[10px] font-medium rounded">
+                        <span className="px-2 py-0.5 bg-[#2d9c6e] text-white text-[10px] font-label uppercase tracking-wide rounded-[2px]">
                           BEST DAY
                         </span>
                       )}
@@ -254,23 +254,23 @@ export function WeekForecast({ spot, currentBuoyData, onClose, onSelectDate }: W
                       {/* Wave forecast */}
                       {waveDataByDay?.get(day.date.toDateString()) && (
                         <div className="text-right px-2">
-                          <span className="text-sm font-semibold text-cyan-700">
+                          <span className="text-sm font-semibold text-[#1A1C1E]">
                             {waveDataByDay.get(day.date.toDateString())!.height.toFixed(1)}ft
                           </span>
-                          <p className="text-xs text-gray-400">
+                          <p className="text-xs text-[#6C7278] font-label">
                             {waveDataByDay.get(day.date.toDateString())!.period.toFixed(0)}s {formatWaveDirection(waveDataByDay.get(day.date.toDateString())!.direction)}
                           </p>
                         </div>
                       )}
                       {day.bestTimeWindow ? (
                         <div className="text-right">
-                          <span className={`text-sm font-semibold ${isBestDay ? 'text-emerald-700' : 'text-gray-800'}`}>
+                          <span className="text-sm font-semibold text-[#1A1C1E]">
                             {day.bestTimeWindow.start} – {day.bestTimeWindow.end}
                           </span>
-                          <p className="text-xs text-gray-500">{day.analysis}</p>
+                          <p className="text-xs text-[#6C7278] font-label">{day.analysis}</p>
                         </div>
                       ) : (
-                        <span className="text-sm text-gray-400">Check conditions</span>
+                        <span className="text-sm text-[#6C7278]">Check conditions</span>
                       )}
                       <div className={`text-lg font-bold w-10 text-right ${getScoreColor(day.score)}`}>
                         {day.score}
@@ -465,8 +465,8 @@ function createSmoothPath(points: Array<{ x: number; y: number }>): string {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 80) return 'text-emerald-600'
+  if (score >= 80) return 'text-[#2d9c6e]'
   if (score >= 60) return 'text-blue-600'
   if (score >= 40) return 'text-amber-600'
-  return 'text-gray-500'
+  return 'text-[#6C7278]'
 }

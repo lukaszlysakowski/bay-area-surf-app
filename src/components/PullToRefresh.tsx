@@ -21,10 +21,10 @@ export function PullToRefreshIndicator({
         opacity: Math.min(progress * 2, 1),
       }}
     >
-      <div className="bg-white dark:bg-slate-800 rounded-full p-3 shadow-lg border border-gray-200 dark:border-slate-600">
+      <div className="bg-white rounded-full p-3 border border-[#1A1C1E]/10">
         {isRefreshing ? (
           <svg
-            className="w-6 h-6 text-cyan-500 animate-spin"
+            className="w-6 h-6 text-[#1A1C1E] animate-spin"
             fill="none"
             viewBox="0 0 24 24"
           >
@@ -44,7 +44,7 @@ export function PullToRefreshIndicator({
           </svg>
         ) : (
           <svg
-            className="w-6 h-6 text-cyan-500 transition-transform"
+            className="w-6 h-6 text-[#1A1C1E] transition-transform"
             style={{
               transform: `rotate(${progress * 180}deg)`,
             }}

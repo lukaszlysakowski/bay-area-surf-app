@@ -84,25 +84,25 @@ export function DateTabs({ selected, onChange }: DateTabsProps) {
   }, [])
 
   return (
-    <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+    <div className="flex gap-1 bg-[#EDE9E4] rounded-[4px] p-1">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => onChange(tab.id)}
-          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded-[2px] text-sm font-medium transition-colors flex items-center gap-1.5 ${
             selected === tab.id
               ? tab.isLive
-                ? 'bg-emerald-500 text-white shadow-sm'
-                : 'bg-white text-gray-800 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-[#B8422E] text-white'
+                : 'bg-white text-[#1A1C1E]'
+              : 'text-[#6C7278] hover:text-[#1A1C1E]'
           }`}
         >
           {tab.isLive && (
-            <span className={`w-2 h-2 rounded-full ${selected === tab.id ? 'bg-white' : 'bg-emerald-500'} animate-pulse`}></span>
+            <span className={`w-1.5 h-1.5 ${selected === tab.id ? 'bg-white' : 'bg-[#B8422E]'} animate-pulse`}></span>
           )}
           <span>{tab.label}</span>
           {!tab.isLive && (
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-[#6C7278] font-label">
               {formatShortDate(tab.date)}
             </span>
           )}

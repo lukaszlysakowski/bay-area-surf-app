@@ -10,7 +10,7 @@ interface WeatherBarProps {
 export function WeatherBar({ weather, dayWeather, isLoading }: WeatherBarProps) {
   if (isLoading) {
     return (
-      <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-3 mb-4 animate-pulse">
+      <div className="bg-white rounded-[4px] border border-[#1A1C1E]/10 p-3 mb-4 animate-pulse">
         <div className="flex items-center gap-4">
           <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
           <div className="flex-1 space-y-2">
@@ -37,29 +37,29 @@ export function WeatherBar({ weather, dayWeather, isLoading }: WeatherBarProps) 
   const uvInfo = getUVLevel(uvIndex)
 
   return (
-    <div className="bg-gradient-to-r from-sky-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-xl border border-sky-200 dark:border-gray-700 p-3 mb-4">
+    <div className="bg-white rounded-[4px] border border-[#1A1C1E]/10 p-3 mb-4">
       <div className="flex items-center gap-4 flex-wrap">
         {/* Weather Icon & Description */}
         <div className="flex items-center gap-2">
           <span className="text-2xl">{getWeatherIcon(weatherCode)}</span>
           <div>
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+            <p className="text-sm font-medium text-[#1A1C1E]">
               {getWeatherDescription(weatherCode)}
             </p>
             {temp && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">{temp}</p>
+              <p className="text-xs text-[#6C7278] font-label">{temp}</p>
             )}
           </div>
         </div>
 
         {/* Divider */}
-        <div className="h-8 w-px bg-gray-300 dark:bg-gray-600 hidden sm:block"></div>
+        <div className="h-8 w-px bg-[#1A1C1E]/15 hidden sm:block"></div>
 
         {/* UV Index */}
         <div className="flex items-center gap-2">
           <span className="text-lg">☀️</span>
           <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">UV Index</p>
+            <p className="text-xs text-[#6C7278] font-label">UV Index</p>
             <p className="text-sm font-medium" style={{ color: uvInfo.color }}>
               {uvIndex.toFixed(0)} - {uvInfo.level}
             </p>
@@ -69,12 +69,12 @@ export function WeatherBar({ weather, dayWeather, isLoading }: WeatherBarProps) 
         {/* Precipitation */}
         {precipProb > 0 && (
           <>
-            <div className="h-8 w-px bg-gray-300 dark:bg-gray-600 hidden sm:block"></div>
+            <div className="h-8 w-px bg-[#1A1C1E]/15 hidden sm:block"></div>
             <div className="flex items-center gap-2">
               <span className="text-lg">💧</span>
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Rain Chance</p>
-                <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                <p className="text-xs text-[#6C7278] font-label">Rain Chance</p>
+                <p className="text-sm font-medium text-[#1A1C1E]">
                   {precipProb}%
                 </p>
               </div>
@@ -85,8 +85,8 @@ export function WeatherBar({ weather, dayWeather, isLoading }: WeatherBarProps) 
         {/* Sunrise/Sunset */}
         {day && (
           <>
-            <div className="h-8 w-px bg-gray-300 dark:bg-gray-600 hidden sm:block"></div>
-            <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+            <div className="h-8 w-px bg-[#1A1C1E]/15 hidden sm:block"></div>
+            <div className="flex items-center gap-3 text-xs text-[#6C7278] font-label">
               <span>🌅 {formatTime(day.sunrise)}</span>
               <span>🌇 {formatTime(day.sunset)}</span>
             </div>
