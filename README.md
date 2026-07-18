@@ -46,6 +46,8 @@ Then open the printed local URL (default http://localhost:5173).
 | `npm run build` | Type-check and build for production |
 | `npm run preview` | Preview the production build locally |
 | `npm run lint` | Run ESLint |
+| `npm test` | Run the unit test suite (Vitest) |
+| `npm run test:watch` | Run tests in watch mode |
 
 ## Spots covered
 
