@@ -3,7 +3,7 @@ import type { SurfPreferences } from '../types'
 
 const STORAGE_KEY = 'surfPreferences'
 
-type DateOption = 'now' | 'today' | 'tomorrow' | 'friday' | 'saturday' | 'sunday'
+type DateOption = 'now' | 'today' | 'tomorrow' | 'thursday' | 'friday' | 'saturday' | 'sunday'
 
 type RadiusOption = 'all' | '15' | '30' | '45' | '60'
 

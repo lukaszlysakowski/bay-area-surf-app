@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-export type DateOption = 'now' | 'today' | 'tomorrow' | 'friday' | 'saturday' | 'sunday'
+export type DateOption = 'now' | 'today' | 'tomorrow' | 'thursday' | 'friday' | 'saturday' | 'sunday'
 
 interface DateTabsProps {
   selected: DateOption
@@ -41,12 +41,24 @@ export function DateTabs({ selected, onChange }: DateTabsProps) {
       available: true,
     })
 
-    // Find next Friday, Saturday, Sunday
+    // Find next Thursday, Friday, Saturday, Sunday
+    const daysUntilThursday = (4 - dayOfWeek + 7) % 7 || 7
     const daysUntilFriday = (5 - dayOfWeek + 7) % 7 || 7
     const daysUntilSaturday = (6 - dayOfWeek + 7) % 7 || 7
     const daysUntilSunday = (0 - dayOfWeek + 7) % 7 || 7
 
-    // Only show weekend days if they're not today or tomorrow
+    // Only show days if they're not today or tomorrow
+    if (daysUntilThursday > 1) {
+      const thursday = new Date(today)
+      thursday.setDate(thursday.getDate() + daysUntilThursday)
+      options.push({
+        id: 'thursday',
+        label: 'Thu',
+        date: thursday,
+        available: true,
+      })
+    }
+
     if (daysUntilFriday > 1) {
       const friday = new Date(today)
       friday.setDate(friday.getDate() + daysUntilFriday)
@@ -132,6 +144,14 @@ export function getDateForOption(option: DateOption): Date {
       const tomorrow = new Date(today)
       tomorrow.setDate(tomorrow.getDate() + 1)
       return tomorrow
+    }
+
+    case 'thursday': {
+      const dayOfWeek = today.getDay()
+      const daysUntil = (4 - dayOfWeek + 7) % 7 || 7
+      const thursday = new Date(today)
+      thursday.setDate(thursday.getDate() + daysUntil)
+      return thursday
     }
 
     case 'friday': {
@@ -228,6 +248,10 @@ export function getDateOptionForDate(date: Date): DateOption | null {
   // Check if it matches upcoming weekend days (within 7 days)
   if (diffDays > 1 && diffDays <= 7) {
     const todayDow = today.getDay()
+
+    // Check Thursday
+    const daysUntilThursday = (4 - todayDow + 7) % 7 || 7
+    if (daysUntilThursday > 1 && diffDays === daysUntilThursday) return 'thursday'
 
     // Check Friday
     const daysUntilFriday = (5 - todayDow + 7) % 7 || 7
