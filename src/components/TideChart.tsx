@@ -46,8 +46,15 @@ export function TideChart({ tideData, height = 140, showLabels = true }: TideCha
     const toY = (h: number) =>
       paddingTop + chartHeight - ((h - domainMin) / range) * chartHeight
 
-    const points = hourly.map((tide, index) => ({
-      x: paddingLeft + (chartWidth * index) / (hourly.length - 1),
+    // Position each point by its actual clock time (via toX), not its array
+    // index — so the curve shares one x-scale with the markers, the "now"
+    // indicator, and the axis labels, and stays correct for any point count.
+    const hoursOf = (time: string) => {
+      const t = new Date(time)
+      return t.getHours() + t.getMinutes() / 60
+    }
+    const points = hourly.map((tide) => ({
+      x: toX(hoursOf(tide.time)),
       y: toY(tide.height),
       height: tide.height,
       time: tide.time,
@@ -62,13 +69,19 @@ export function TideChart({ tideData, height = 140, showLabels = true }: TideCha
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const hoursElapsed = (now.getTime() - todayStart.getTime()) / (1000 * 60 * 60)
     const nowX = toX(hoursElapsed)
-    const hourIndex = Math.floor(hoursElapsed)
-    const hourFraction = hoursElapsed - hourIndex
-    let currentHeight = domainMin
-    if (hourIndex < hourly.length - 1) {
-      const h1 = hourly[hourIndex]?.height ?? domainMin
-      const h2 = hourly[hourIndex + 1]?.height ?? domainMin
-      currentHeight = h1 + (h2 - h1) * hourFraction
+    // Interpolate the current height by bracketing "now" between the two
+    // surrounding hourly points by clock time — robust to gaps or a series
+    // that doesn't start at midnight.
+    let currentHeight = hourly[0].height
+    for (let i = 0; i < hourly.length - 1; i++) {
+      const h1 = hoursOf(hourly[i].time)
+      const h2 = hoursOf(hourly[i + 1].time)
+      if (hoursElapsed >= h1 && hoursElapsed <= h2 && h2 > h1) {
+        currentHeight =
+          hourly[i].height +
+          (hourly[i + 1].height - hourly[i].height) * ((hoursElapsed - h1) / (h2 - h1))
+        break
+      }
     }
     const nowY = toY(currentHeight)
 
