@@ -23,6 +23,7 @@ export function useTideData(stationId: string, date: string, days = 1) {
     queryKey: ['tides', stationId, date, days],
     queryFn: () => fetchTideData({ stationId, date, days }),
     staleTime: 1000 * 60 * 60, // 1 hour
+    gcTime: 1000 * 60 * 60 * 24 * 30, // keep 30 days so it persists across reloads
     retry: 2,
   })
 }
@@ -59,6 +60,9 @@ export function useMultipleTideData(stationIds: string[], date?: string) {
         ? fetchTideData({ stationId, date, days: 1 })
         : fetchTodayTides(stationId),
       staleTime: 1000 * 60 * 30,
+      // Concrete-date queries persist to localStorage (see main.tsx); keep them
+      // in memory 30 days so they survive to be written and rehydrated.
+      gcTime: date ? 1000 * 60 * 60 * 24 * 30 : 1000 * 60 * 5,
       refetchInterval: date ? false : 1000 * 60 * 60, // Don't refetch future dates
       retry: 2,
     })),
