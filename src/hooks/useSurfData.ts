@@ -37,8 +37,11 @@ export function useSurfData(options: UseSurfDataOptions) {
       const buoyData = buoyQueries.data.get(spot.buoyStation)
       const tideData = tideQueries.data.get(spot.tideStation)
 
-      if (buoyData && tideData) {
-        map.set(spot.id, buildConditions(buoyData, tideData))
+      // Buoy (wave) data is essential; tide is supplementary. Build conditions
+      // as soon as wave data is present so a failed tide station never drops
+      // the spot from the ranking.
+      if (buoyData) {
+        map.set(spot.id, buildConditions(buoyData, tideData ?? null))
       }
     }
 
@@ -76,7 +79,9 @@ export function useSurfData(options: UseSurfDataOptions) {
     conditionsMap,
     tideDataMap,
     isLoading: buoyQueries.isLoading || tideQueries.isLoading,
-    isError: buoyQueries.isError || tideQueries.isError,
+    // Only essential (buoy/wave) failures blank the page. Tide outages degrade
+    // gracefully — spots still render with wave data and "tides unavailable".
+    isError: buoyQueries.isError,
     errors: [...buoyQueries.errors, ...tideQueries.errors],
   }
 }
@@ -99,9 +104,9 @@ export function useSpotScore(
 
   // Calculate score
   const result = useMemo(() => {
-    if (!buoyData || !tideData) return null
+    if (!buoyData) return null
 
-    const conditions = buildConditions(buoyData, tideData)
+    const conditions = buildConditions(buoyData, tideData ?? null)
     return {
       conditions,
       ...calculateSpotScore(conditions, spot, { surferType, skillLevel }),
@@ -113,22 +118,23 @@ export function useSpotScore(
     buoyData,
     tideData,
     isLoading: buoyQueries.isLoading || tideQueries.isLoading,
-    isError: buoyQueries.isError || tideQueries.isError,
+    // Tide failures degrade gracefully; only wave-data failure is a hard error.
+    isError: buoyQueries.isError,
   }
 }
 
 /**
  * Builds SurfConditions from buoy and tide data
  */
-function buildConditions(buoyData: BuoyData, tideData: TideData): SurfConditions {
+function buildConditions(buoyData: BuoyData, tideData: TideData | null): SurfConditions {
   return {
     waveHeight: buoyData.waveHeight,
     wavePeriod: buoyData.wavePeriod,
     swellDirection: buoyData.waveDirection,
     windSpeed: buoyData.windSpeed,
     windDirection: buoyData.windDirection,
-    tideHeight: getCurrentTideHeight(tideData),
-    tidePhase: getTidePhase(tideData),
+    tideHeight: tideData ? getCurrentTideHeight(tideData) : null,
+    tidePhase: tideData ? getTidePhase(tideData) : null,
     waterTemp: buoyData.waterTemp,
     airTemp: buoyData.airTemp,
   }

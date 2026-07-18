@@ -296,8 +296,8 @@ export function SpotCard({
                   />
                   <ConditionRow
                     label="Tide"
-                    value={`${conditions.tideHeight.toFixed(1)} ft`}
-                    note={conditions.tidePhase}
+                    value={conditions.tideHeight !== null ? `${conditions.tideHeight.toFixed(1)} ft` : 'Unavailable'}
+                    note={conditions.tidePhase ?? 'NOAA data unavailable'}
                   />
                 </div>
               </div>

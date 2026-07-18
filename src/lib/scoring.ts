@@ -156,10 +156,13 @@ export function scoreSwellDirection(
  * Weight: 5%
  */
 export function scoreTide(
-  currentTideHeight: number,
-  _tidePhase: 'rising' | 'falling' | 'high' | 'low',
+  currentTideHeight: number | null,
+  _tidePhase: 'rising' | 'falling' | 'high' | 'low' | null,
   spotBestTide: 'low' | 'mid' | 'high' | 'any'
 ): number {
+  // Tide unavailable (NOAA outage / dead station) — score neutral so the
+  // spot still ranks on its wave/wind data instead of being dropped.
+  if (currentTideHeight === null) return 80
   if (spotBestTide === 'any') return 80 // Neutral score
 
   // Estimate tide level (0-6ft typical range for SF Bay)

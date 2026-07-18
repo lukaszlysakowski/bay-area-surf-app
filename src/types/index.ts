@@ -39,8 +39,8 @@ export interface SurfConditions {
   swellDirection: number
   windSpeed: number
   windDirection: number
-  tideHeight: number
-  tidePhase: 'rising' | 'falling' | 'high' | 'low'
+  tideHeight: number | null // null when tide data is unavailable (NOAA outage / dead station)
+  tidePhase: 'rising' | 'falling' | 'high' | 'low' | null
   waterTemp?: number // °F
   airTemp?: number // °F
 }
