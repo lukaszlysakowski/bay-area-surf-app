@@ -79,9 +79,12 @@ export function useSurfData(options: UseSurfDataOptions) {
     conditionsMap,
     tideDataMap,
     isLoading: buoyQueries.isLoading || tideQueries.isLoading,
-    // Only essential (buoy/wave) failures blank the page. Tide outages degrade
-    // gracefully — spots still render with wave data and "tides unavailable".
-    isError: buoyQueries.isError,
+    // Only blank the page when no spot has usable wave data. conditionsMap holds
+    // only spots whose buoy loaded (scoreAndRankSpots pads the rest with a
+    // "no data" placeholder, so rankedSpots is always the full list and can't be
+    // used here). A partial buoy outage still renders the spots that loaded;
+    // tide outages already degrade gracefully.
+    isError: buoyQueries.isError && conditionsMap.size === 0,
     errors: [...buoyQueries.errors, ...tideQueries.errors],
   }
 }

@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => {
             if (id.includes('@tanstack/react-query')) {
               return 'query'
             }
-            if (id.includes('leaflet')) {
+            if (id.includes('mapbox-gl')) {
               return 'map'
             }
           }
