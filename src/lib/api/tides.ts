@@ -1,7 +1,16 @@
 import type { TideData, TidePrediction, NOAATideResponse } from '../../types'
+import { fetchWorldTidesData } from './worldtides'
 
 // Use Vite proxy in development to avoid CORS issues
 const COOPS_BASE_URL = '/api/coops/api/prod/datagetter'
+
+// Coordinates for the NOAA tide stations in use, so we can fall back to the
+// coordinate-based WorldTides API when NOAA CO-OPS fails (outage or a station
+// that no longer serves predictions, e.g. Point Reyes 9415020).
+const TIDE_STATION_COORDS: Record<string, { lat: number; lng: number }> = {
+  '9414290': { lat: 37.8063, lng: -122.4659 }, // San Francisco (Golden Gate)
+  '9415020': { lat: 37.9942, lng: -122.9736 }, // Point Reyes
+}
 
 interface FetchTideOptions {
   stationId: string
@@ -27,23 +36,36 @@ export async function fetchTideData(options: FetchTideOptions): Promise<TideData
 
   const endDateStr = formatDateForAPI(endDate)
 
-  // Fetch high/low tides and hourly data in parallel
-  const [hiloData, hourlyData] = await Promise.all([
-    fetchTidePredictions(stationId, date, endDateStr, 'hilo'),
-    fetchTidePredictions(stationId, date, endDateStr, 'h'),
-  ])
+  try {
+    // Fetch high/low tides and hourly data in parallel
+    const [hiloData, hourlyData] = await Promise.all([
+      fetchTidePredictions(stationId, date, endDateStr, 'hilo'),
+      fetchTidePredictions(stationId, date, endDateStr, 'h'),
+    ])
 
-  return {
-    highLow: hiloData.predictions.map((p) => ({
-      time: p.t,
-      height: parseFloat(p.v),
-      type: p.type || null,
-    })),
-    hourly: hourlyData.predictions.map((p) => ({
-      time: p.t,
-      height: parseFloat(p.v),
-      type: null,
-    })),
+    return {
+      highLow: hiloData.predictions.map((p) => ({
+        time: p.t,
+        height: parseFloat(p.v),
+        type: p.type || null,
+      })),
+      hourly: hourlyData.predictions.map((p) => ({
+        time: p.t,
+        height: parseFloat(p.v),
+        type: null,
+      })),
+    }
+  } catch (noaaError) {
+    // NOAA failed — fall back to WorldTides (coordinate-based) if we know this
+    // station's location. Preserve the original error if the fallback can't run
+    // or also fails, so callers see the primary cause.
+    const coords = TIDE_STATION_COORDS[stationId]
+    if (!coords) throw noaaError
+    try {
+      return await fetchWorldTidesData(coords.lat, coords.lng, date, days)
+    } catch {
+      throw noaaError
+    }
   }
 }
 
@@ -104,22 +126,36 @@ export async function fetchTideRange(
   const start = formatDateForAPI(startDate)
   const end = formatDateForAPI(endDate)
 
-  const [hiloData, hourlyData] = await Promise.all([
-    fetchTidePredictions(stationId, start, end, 'hilo'),
-    fetchTidePredictions(stationId, start, end, 'h'),
-  ])
+  try {
+    const [hiloData, hourlyData] = await Promise.all([
+      fetchTidePredictions(stationId, start, end, 'hilo'),
+      fetchTidePredictions(stationId, start, end, 'h'),
+    ])
 
-  return {
-    highLow: hiloData.predictions.map((p) => ({
-      time: p.t,
-      height: parseFloat(p.v),
-      type: p.type || null,
-    })),
-    hourly: hourlyData.predictions.map((p) => ({
-      time: p.t,
-      height: parseFloat(p.v),
-      type: null,
-    })),
+    return {
+      highLow: hiloData.predictions.map((p) => ({
+        time: p.t,
+        height: parseFloat(p.v),
+        type: p.type || null,
+      })),
+      hourly: hourlyData.predictions.map((p) => ({
+        time: p.t,
+        height: parseFloat(p.v),
+        type: null,
+      })),
+    }
+  } catch (noaaError) {
+    const coords = TIDE_STATION_COORDS[stationId]
+    if (!coords) throw noaaError
+    const days = Math.max(
+      1,
+      Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+    )
+    try {
+      return await fetchWorldTidesData(coords.lat, coords.lng, start, days)
+    } catch {
+      throw noaaError
+    }
   }
 }
 
