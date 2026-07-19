@@ -1,14 +1,20 @@
 import type { SpotConfig, SurfConditions } from '../types'
 import { getSwellSource, getHistoricalContext, getHistoricalPercentile } from '../lib/spots'
+import { useSpotMarineForecast, getForecastForDate } from '../hooks/useMarineForecast'
+import { ForecastTrendChart } from './ForecastTrendChart'
 
 interface SpotDetailsProps {
   spot: SpotConfig
   conditions?: SurfConditions | null
   score?: number
+  date?: Date
   onClose: () => void
 }
 
-export function SpotDetails({ spot, conditions, score, onClose }: SpotDetailsProps) {
+export function SpotDetails({ spot, conditions, score, date, onClose }: SpotDetailsProps) {
+  const { data: marineForecast } = useSpotMarineForecast(spot.coordinates)
+  const trendDay = getForecastForDate(marineForecast, date ?? new Date())
+  const isToday = (date ?? new Date()).toDateString() === new Date().toDateString()
   const swellInfo = conditions ? getSwellSource(conditions.swellDirection) : null
   const percentile = score ? getHistoricalPercentile(score) : null
   const historicalContext = score ? getHistoricalContext(score) : null
@@ -73,6 +79,16 @@ export function SpotDetails({ spot, conditions, score, onClose }: SpotDetailsPro
             <p className="font-semibold text-[#1A1C1E] capitalize">{spot.bestTide}</p>
           </div>
         </div>
+
+        {/* Wind & swell trend across the day */}
+        {trendDay && trendDay.hourly.length > 1 && (
+          <div>
+            <h3 className="text-sm font-semibold text-[#1A1C1E] mb-2">
+              {isToday ? "Today's wind & swell" : 'Wind & swell'}
+            </h3>
+            <ForecastTrendChart hourly={trendDay.hourly} isToday={isToday} />
+          </div>
+        )}
 
         {/* Historical Comparison */}
         {score && percentile && historicalContext && (

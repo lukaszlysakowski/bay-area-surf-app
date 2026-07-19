@@ -14,6 +14,7 @@ import { SpotCard } from './components/SpotCard'
 import { MapView, useUserLocation } from './components/MapView'
 import { DateTabs, getDateForOption, formatDateDisplay, formatDateForAPI, getDateOptionForDate } from './components/DateTabs'
 import { BestTimesGrid } from './components/BestTimesGrid'
+import { BestReachableCard } from './components/BestReachableCard'
 import { getRatingColor } from './lib/utils'
 import { formatDriveTime } from './lib/api/osrm'
 import { getConditionsQuality, getIdealWaveRange } from './lib/scoring'
@@ -569,6 +570,15 @@ function App() {
               </div>
             )}
 
+            {/* Best spot reachable within a drive-time budget */}
+            {viewMode !== 'map' && userLocation && driveTimes && driveTimes.size > 0 && (
+              <BestReachableCard
+                spots={spots}
+                driveTimes={driveTimes}
+                onSelect={handleSpotSelect}
+              />
+            )}
+
             {/* Best Times Grid - shows optimal surf windows for all locations */}
             {viewMode === 'list' && filteredSpots.length > 0 && (
               <BestTimesGrid
@@ -747,6 +757,7 @@ function App() {
               spot={detailsSpot}
               conditions={conditionsMap.get(detailsSpot.id)}
               score={sortedSpots.find(s => s.id === detailsSpot.id)?.score}
+              date={getDateForOption(selectedDate)}
               onClose={() => setShowSpotDetails(false)}
             />
           </div>
