@@ -12,7 +12,7 @@ interface SpotDetailsProps {
 }
 
 export function SpotDetails({ spot, conditions, score, date, onClose }: SpotDetailsProps) {
-  const { data: marineForecast } = useSpotMarineForecast(spot.coordinates)
+  const { data: marineForecast } = useSpotMarineForecast(spot.coordinates, 8)
   const trendDay = getForecastForDate(marineForecast, date ?? new Date())
   const isToday = (date ?? new Date()).toDateString() === new Date().toDateString()
   const swellInfo = conditions ? getSwellSource(conditions.swellDirection) : null

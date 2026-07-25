@@ -1,9 +1,11 @@
 import { useMemo } from 'react'
 import { useMultipleBuoyData, getUniqueBuoyStations } from './useBuoyData'
 import { useMultipleTideData, getUniqueTideStations } from './useTideData'
+import { useMultipleMarineForecasts, getForecastForDate } from './useMarineForecast'
 import { SURF_SPOTS } from '../lib/spots'
 import { scoreAndRankSpots, calculateSpotScore } from '../lib/scoring'
 import { getTidePhase, getCurrentTideHeight } from '../lib/api/tides'
+import { marineDayToConditions } from '../lib/forecastConditions'
 import type { SurfConditions, SpotConfig, SurfPreferences, BuoyData, TideData } from '../types'
 
 interface UseSurfDataOptions {
@@ -23,11 +25,26 @@ export function useSurfData(options: UseSurfDataOptions) {
   const buoyStations = useMemo(() => getUniqueBuoyStations(SURF_SPOTS), [])
   const tideStations = useMemo(() => getUniqueTideStations(SURF_SPOTS), [])
 
-  // Fetch data from all stations
-  // Note: Buoy data is always real-time (NOAA doesn't provide forecasts)
-  // Tide data can be for a specific date
+  // Is the selected date a future day? Today/now (date undefined, or equal to
+  // today's YYYYMMDD as the "now" tab passes) uses the live buoy — most accurate
+  // for right now. Future dates use the Open-Meteo forecast (waves + wind).
+  const now = new Date()
+  const todayApi = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
+  const isFutureDate = !!date && date !== todayApi
+  const targetDate = useMemo(
+    () =>
+      date
+        ? new Date(Number(date.slice(0, 4)), Number(date.slice(4, 6)) - 1, Number(date.slice(6, 8)))
+        : null,
+    [date]
+  )
+
+  // Fetch data from all stations.
+  // Buoy data is always real-time (NOAA doesn't forecast); tide is date-specific;
+  // the marine forecast is fetched only for future dates.
   const buoyQueries = useMultipleBuoyData(buoyStations)
   const tideQueries = useMultipleTideData(tideStations, date)
+  const marineQueries = useMultipleMarineForecasts(SURF_SPOTS, isFutureDate)
 
   // Build conditions map for each spot
   const conditionsMap = useMemo(() => {
@@ -37,16 +54,32 @@ export function useSurfData(options: UseSurfDataOptions) {
       const buoyData = buoyQueries.data.get(spot.buoyStation)
       const tideData = tideQueries.data.get(spot.tideStation)
 
-      // Buoy (wave) data is essential; tide is supplementary. Build conditions
-      // as soon as wave data is present so a failed tide station never drops
-      // the spot from the ranking.
+      if (isFutureDate && targetDate) {
+        // Future date: score on the forecast for that day (waves + morning wind).
+        const forecast = marineQueries.data.get(spot.id)
+        const day = getForecastForDate(forecast ?? undefined, targetDate)
+        if (day) {
+          map.set(
+            spot.id,
+            marineDayToConditions(day, tideData ?? null, {
+              waterTemp: buoyData?.waterTemp,
+              airTemp: buoyData?.airTemp,
+            })
+          )
+        }
+        continue
+      }
+
+      // Today/now: buoy (wave) data is essential; tide is supplementary. Build
+      // conditions as soon as wave data is present so a failed tide station never
+      // drops the spot from the ranking.
       if (buoyData) {
         map.set(spot.id, buildConditions(buoyData, tideData ?? null))
       }
     }
 
     return map
-  }, [buoyQueries.data, tideQueries.data])
+  }, [buoyQueries.data, tideQueries.data, marineQueries.data, isFutureDate, targetDate])
 
   // Score and rank spots
   const rankedSpots = useMemo(() => {
@@ -78,13 +111,16 @@ export function useSurfData(options: UseSurfDataOptions) {
     bestSpot,
     conditionsMap,
     tideDataMap,
-    isLoading: buoyQueries.isLoading || tideQueries.isLoading,
-    // Only blank the page when no spot has usable wave data. conditionsMap holds
-    // only spots whose buoy loaded (scoreAndRankSpots pads the rest with a
+    isLoading: buoyQueries.isLoading || tideQueries.isLoading || marineQueries.isLoading,
+    // Only blank the page when no spot has usable conditions. conditionsMap holds
+    // only spots whose source data loaded (scoreAndRankSpots pads the rest with a
     // "no data" placeholder, so rankedSpots is always the full list and can't be
-    // used here). A partial buoy outage still renders the spots that loaded;
-    // tide outages already degrade gracefully.
-    isError: buoyQueries.isError && conditionsMap.size === 0,
+    // used here). A partial outage still renders the spots that loaded; tide
+    // outages already degrade gracefully. On future dates the forecast is the
+    // essential source; today/now it's the buoy.
+    isError:
+      conditionsMap.size === 0 &&
+      (isFutureDate ? marineQueries.isError : buoyQueries.isError),
     errors: [...buoyQueries.errors, ...tideQueries.errors],
   }
 }

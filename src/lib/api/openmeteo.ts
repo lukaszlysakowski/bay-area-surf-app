@@ -103,9 +103,6 @@ export async function fetchMarineForecast(
       'swell_wave_period',
       'swell_wave_direction',
       'wind_wave_height',
-      'wind_speed_10m',
-      'wind_direction_10m',
-      'wind_gusts_10m',
     ].join(','),
     forecast_days: days.toString(),
     timezone: 'America/Los_Angeles',
@@ -114,7 +111,12 @@ export async function fetchMarineForecast(
   const url = `https://marine-api.open-meteo.com/v1/marine?${params}`
 
   try {
-    const response = await fetch(url)
+    // The marine endpoint does NOT carry 10m wind (it returns nulls), so wind
+    // is fetched from the weather forecast endpoint and merged in by timestamp.
+    const [response, windByHour] = await Promise.all([
+      fetch(url),
+      fetchWindByHour(lat, lng, days),
+    ])
 
     if (!response.ok) {
       console.warn(`Open-Meteo API error: ${response.status}`)
@@ -122,17 +124,65 @@ export async function fetchMarineForecast(
     }
 
     const data: OpenMeteoResponse = await response.json()
-    return parseMarineResponse(data)
+    return parseMarineResponse(data, windByHour)
   } catch (error) {
     console.error('Error fetching Open-Meteo marine data:', error)
     throw error
   }
 }
 
+interface HourWind {
+  speedMs: number
+  dir: number
+  gustMs: number
+}
+
+/**
+ * Fetches 10m wind from the weather forecast endpoint (the marine endpoint
+ * returns null wind). Keyed by the hourly timestamp string so it can be merged
+ * into the marine hours. Returns an empty map on failure — wind then reads 0.
+ */
+async function fetchWindByHour(
+  lat: number,
+  lng: number,
+  days: number
+): Promise<Map<string, HourWind>> {
+  const params = new URLSearchParams({
+    latitude: lat.toString(),
+    longitude: lng.toString(),
+    hourly: 'wind_speed_10m,wind_direction_10m,wind_gusts_10m',
+    wind_speed_unit: 'ms',
+    forecast_days: days.toString(),
+    timezone: 'America/Los_Angeles',
+  })
+
+  const map = new Map<string, HourWind>()
+  try {
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`)
+    if (!res.ok) return map
+    const data = await res.json()
+    const h = data?.hourly
+    if (!h?.time) return map
+    for (let i = 0; i < h.time.length; i++) {
+      map.set(h.time[i], {
+        speedMs: h.wind_speed_10m?.[i] ?? 0,
+        dir: h.wind_direction_10m?.[i] ?? 0,
+        gustMs: h.wind_gusts_10m?.[i] ?? 0,
+      })
+    }
+  } catch (error) {
+    console.warn('Wind fetch failed; wind will be unavailable', error)
+  }
+  return map
+}
+
 /**
  * Parse Open-Meteo response into our format
  */
-function parseMarineResponse(data: OpenMeteoResponse): MarineForecast {
+function parseMarineResponse(
+  data: OpenMeteoResponse,
+  windByHour: Map<string, HourWind> = new Map()
+): MarineForecast {
   const hourlyData: MarineForecastHour[] = []
 
   for (let i = 0; i < data.hourly.time.length; i++) {
@@ -140,8 +190,10 @@ function parseMarineResponse(data: OpenMeteoResponse): MarineForecast {
     const swellHeight = data.hourly.swell_wave_height[i] ?? 0
     const windWaveHeight = data.hourly.wind_wave_height[i] ?? 0
 
-    const windSpeed = data.hourly.wind_speed_10m?.[i] ?? 0
-    const windGusts = data.hourly.wind_gusts_10m?.[i] ?? 0
+    // Wind is merged from the weather endpoint (marine endpoint returns null).
+    const wind = windByHour.get(data.hourly.time[i])
+    const windSpeed = wind?.speedMs ?? 0
+    const windGusts = wind?.gustMs ?? 0
 
     hourlyData.push({
       time: new Date(data.hourly.time[i]),
@@ -157,7 +209,7 @@ function parseMarineResponse(data: OpenMeteoResponse): MarineForecast {
       windWaveHeightFt: windWaveHeight * METERS_TO_FEET,
       windSpeed,
       windSpeedMph: windSpeed * 2.237, // m/s to mph
-      windDirection: data.hourly.wind_direction_10m?.[i] ?? 0,
+      windDirection: wind?.dir ?? 0,
       windGusts,
       windGustsMph: windGusts * 2.237,
     })
