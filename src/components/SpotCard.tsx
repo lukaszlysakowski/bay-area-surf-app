@@ -20,10 +20,12 @@ interface SpotCardProps {
     breakdown: string
     coordinates: { lat: number; lng: number }
     bestTide: 'low' | 'mid' | 'high' | 'any'
+    offshoreWindDirection: number
   }
   rank: number
   conditions?: SurfConditions
   tideData?: TideData
+  marineDay?: MarineDayForecast | null
   driveTimeMinutes?: number
   spitcastForecast?: SpitcastDayForecast | null
   waveForecast?: MarineDayForecast | null
@@ -37,6 +39,7 @@ export function SpotCard({
   rank,
   conditions,
   tideData,
+  marineDay,
   driveTimeMinutes,
   spitcastForecast,
   waveForecast,
@@ -46,11 +49,14 @@ export function SpotCard({
 }: SpotCardProps) {
   const [expanded, setExpanded] = useState(false)
 
-  // Calculate best time window based on tide and wind patterns
+  // Calculate best time window from tide + real hourly wind & swell forecast
   const bestTimeWindow = useMemo(() => {
     if (!tideData) return null
-    return calculateBestTimeWindow(tideData, spot.bestTide)
-  }, [tideData, spot.bestTide])
+    return calculateBestTimeWindow(tideData, spot.bestTide, {
+      marineDay,
+      offshoreWindDirection: spot.offshoreWindDirection,
+    })
+  }, [tideData, spot.bestTide, spot.offshoreWindDirection, marineDay])
 
   // Calculate sun times and dawn patrol status
   const sunTimes = useMemo(() => {

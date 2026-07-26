@@ -86,7 +86,7 @@ function App() {
   }, [selectedDate])
 
   // Fetch and score all spots
-  const { spots, bestSpot, conditionsMap, tideDataMap, isLoading, isError, errors } = useSurfData({
+  const { spots, bestSpot, conditionsMap, tideDataMap, marineDayMap, isLoading, isError, errors } = useSurfData({
     surferType,
     skillLevel,
     date: dateForAPI,
@@ -584,6 +584,7 @@ function App() {
               <BestTimesGrid
                 spots={filteredSpots}
                 tideDataMap={tideDataMap}
+                marineDayMap={marineDayMap}
                 driveTimesMap={driveTimes}
                 selectedDate={getDateForOption(selectedDate)}
                 dateLabel={formatDateDisplay(selectedDate)}
@@ -662,6 +663,7 @@ function App() {
                             rank={index + 1}
                             conditions={conditionsMap.get(spot.id)}
                             tideData={tideDataMap.get(spot.id)}
+                            marineDay={marineDayMap.get(spot.id)}
                             driveTimeMinutes={driveTimes?.get(spot.id)?.minutes}
                             spitcastForecast={spitcastMap.get(spot.id)}
                             waveForecast={!isToday ? waveForecastForDate : null}

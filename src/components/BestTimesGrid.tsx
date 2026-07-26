@@ -3,10 +3,12 @@ import { calculateBestTimeWindow } from '../lib/scoring'
 import { getSunTimes, formatTime } from '../lib/sun'
 import { getRatingColor } from '../lib/utils'
 import type { TideData, SpotConfig, ScoreResult } from '../types'
+import type { MarineDayForecast } from '../lib/api/openmeteo'
 
 interface BestTimesGridProps {
   spots: Array<SpotConfig & ScoreResult>
   tideDataMap: Map<string, TideData>
+  marineDayMap?: Map<string, MarineDayForecast>
   driveTimesMap?: Map<string, { minutes: number }>
   selectedDate: Date
   dateLabel: string
@@ -16,6 +18,7 @@ interface BestTimesGridProps {
 export function BestTimesGrid({
   spots,
   tideDataMap,
+  marineDayMap,
   driveTimesMap,
   selectedDate,
   dateLabel,
@@ -26,7 +29,10 @@ export function BestTimesGrid({
     return spots.map((spot) => {
       const tideData = tideDataMap.get(spot.id)
       const bestTimeWindow = tideData
-        ? calculateBestTimeWindow(tideData, spot.bestTide)
+        ? calculateBestTimeWindow(tideData, spot.bestTide, {
+            marineDay: marineDayMap?.get(spot.id),
+            offshoreWindDirection: spot.offshoreWindDirection,
+          })
         : null
       const sunTimes = getSunTimes(spot.coordinates.lat, spot.coordinates.lng, selectedDate)
       const driveTime = driveTimesMap?.get(spot.id)?.minutes
@@ -38,7 +44,7 @@ export function BestTimesGrid({
         driveTime,
       }
     })
-  }, [spots, tideDataMap, driveTimesMap, selectedDate])
+  }, [spots, tideDataMap, marineDayMap, driveTimesMap, selectedDate])
 
   return (
     <div className="bg-white rounded-[8px] border border-[#1A1C1E]/10 overflow-hidden mb-6">
@@ -108,12 +114,12 @@ export function BestTimesGrid({
 
       {/* Legend */}
       <div className="bg-[#F7F5F2] px-4 py-2 text-xs text-[#6C7278] font-label flex items-center justify-between border-t border-[#1A1C1E]/8">
-        <span>Based on tide patterns + typical wind conditions</span>
+        <span>Based on tide, wind & swell forecast</span>
         <span className="flex items-center gap-1">
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707" />
           </svg>
-          Early morning typically has the lightest winds
+          Hourly Open-Meteo forecast
         </span>
       </div>
     </div>

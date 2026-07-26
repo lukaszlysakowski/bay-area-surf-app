@@ -6,6 +6,7 @@ import { SURF_SPOTS } from '../lib/spots'
 import { scoreAndRankSpots, calculateSpotScore } from '../lib/scoring'
 import { getTidePhase, getCurrentTideHeight } from '../lib/api/tides'
 import { marineDayToConditions } from '../lib/forecastConditions'
+import type { MarineDayForecast } from '../lib/api/openmeteo'
 import type { SurfConditions, SpotConfig, SurfPreferences, BuoyData, TideData } from '../types'
 
 interface UseSurfDataOptions {
@@ -35,16 +36,18 @@ export function useSurfData(options: UseSurfDataOptions) {
     () =>
       date
         ? new Date(Number(date.slice(0, 4)), Number(date.slice(4, 6)) - 1, Number(date.slice(6, 8)))
-        : null,
+        : new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [date]
   )
 
   // Fetch data from all stations.
-  // Buoy data is always real-time (NOAA doesn't forecast); tide is date-specific;
-  // the marine forecast is fetched only for future dates.
+  // Buoy is always real-time (NOAA doesn't forecast); tide is date-specific. The
+  // marine forecast is always fetched: future dates score on it, and every date
+  // uses it for the Best Surf Times windows (real wind + swell + tide).
   const buoyQueries = useMultipleBuoyData(buoyStations)
   const tideQueries = useMultipleTideData(tideStations, date)
-  const marineQueries = useMultipleMarineForecasts(SURF_SPOTS, isFutureDate)
+  const marineQueries = useMultipleMarineForecasts(SURF_SPOTS, true)
 
   // Build conditions map for each spot
   const conditionsMap = useMemo(() => {
@@ -54,7 +57,7 @@ export function useSurfData(options: UseSurfDataOptions) {
       const buoyData = buoyQueries.data.get(spot.buoyStation)
       const tideData = tideQueries.data.get(spot.tideStation)
 
-      if (isFutureDate && targetDate) {
+      if (isFutureDate) {
         // Future date: score on the forecast for that day (waves + morning wind).
         const forecast = marineQueries.data.get(spot.id)
         const day = getForecastForDate(forecast ?? undefined, targetDate)
@@ -106,12 +109,29 @@ export function useSurfData(options: UseSurfDataOptions) {
     return map
   }, [tideQueries.data])
 
+  // Per-spot marine forecast for the selected day — powers the Best Surf Times
+  // windows (real hourly wind + swell) for every date.
+  const marineDayMap = useMemo(() => {
+    const map = new Map<string, MarineDayForecast>()
+    for (const spot of SURF_SPOTS) {
+      const forecast = marineQueries.data.get(spot.id)
+      const day = getForecastForDate(forecast ?? undefined, targetDate)
+      if (day) map.set(spot.id, day)
+    }
+    return map
+  }, [marineQueries.data, targetDate])
+
   return {
     spots: rankedSpots,
     bestSpot,
     conditionsMap,
     tideDataMap,
-    isLoading: buoyQueries.isLoading || tideQueries.isLoading || marineQueries.isLoading,
+    marineDayMap,
+    // Marine only blocks the page on future dates (where scoring needs it). On
+    // today/now it loads in the background and the Best Surf Times upgrade when
+    // it arrives, so it never delays the buoy-driven ranking.
+    isLoading:
+      buoyQueries.isLoading || tideQueries.isLoading || (isFutureDate && marineQueries.isLoading),
     // Only blank the page when no spot has usable conditions. conditionsMap holds
     // only spots whose source data loaded (scoreAndRankSpots pads the rest with a
     // "no data" placeholder, so rankedSpots is always the full list and can't be

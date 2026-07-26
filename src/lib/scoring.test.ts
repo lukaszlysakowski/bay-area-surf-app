@@ -7,8 +7,10 @@ import {
   scoreTide,
   calculateSpotScore,
   scoreAndRankSpots,
+  calculateBestTimeWindow,
 } from './scoring'
-import type { SpotConfig, SurfConditions } from '../types'
+import type { SpotConfig, SurfConditions, TideData } from '../types'
+import type { MarineDayForecast, MarineForecastHour } from './api/openmeteo'
 
 function makeSpot(overrides: Partial<SpotConfig> = {}): SpotConfig {
   return {
@@ -203,5 +205,77 @@ describe('scoreAndRankSpots', () => {
     expect(placeholder.score).toBe(0)
     expect(placeholder.rating).toBe('Poor')
     expect(placeholder.breakdown).toMatch(/no conditions data/i)
+  })
+})
+
+// --- Best time window (forecast-driven) ---
+
+function tideHourly(): TideData {
+  const hourly = Array.from({ length: 24 }, (_, h) => ({
+    time: `2026-07-25T${String(h).padStart(2, '0')}:00:00`,
+    height: 3, // flat tide so wind/swell decide the window
+    type: null,
+  }))
+  return { hourly, highLow: [] }
+}
+
+function marineHour(localHour: number, windMph: number): MarineForecastHour {
+  return {
+    time: new Date(2026, 6, 25, localHour, 0),
+    waveHeight: 1.2, waveHeightFt: 3.9,
+    wavePeriod: 13, waveDirection: 270,
+    swellHeight: 1.2, swellHeightFt: 3.9, swellPeriod: 13, swellDirection: 270,
+    windWaveHeight: 0.4, windWaveHeightFt: 1.3,
+    windSpeed: windMph / 2.237, windSpeedMph: windMph,
+    windDirection: 300, windGusts: 0, windGustsMph: 0,
+  }
+}
+
+function marineDay(): MarineDayForecast {
+  // Glassy morning, windy afternoon.
+  const hourly = [
+    marineHour(6, 4), marineHour(7, 4), marineHour(8, 5), marineHour(9, 7), marineHour(10, 10),
+    marineHour(12, 16), marineHour(13, 17), marineHour(14, 17), marineHour(15, 16),
+  ]
+  return {
+    date: new Date(2026, 6, 25), hourly,
+    minWaveHeight: 3.9, maxWaveHeight: 3.9, avgWaveHeight: 3.9,
+    dominantPeriod: 13, dominantDirection: 270, bestHour: null,
+    avgWindSpeed: 11, maxWindSpeed: 17, avgWindDirection: 300,
+  }
+}
+
+describe('calculateBestTimeWindow', () => {
+  it('returns null without tide data', () => {
+    expect(calculateBestTimeWindow({ hourly: [], highLow: [] }, 'any')).toBeNull()
+  })
+
+  it('with a forecast, picks the glassy morning over the windy afternoon', () => {
+    const win = calculateBestTimeWindow(tideHourly(), 'any', {
+      marineDay: marineDay(),
+      offshoreWindDirection: 45,
+    })
+    expect(win).not.toBeNull()
+    // Window should start in the morning (before ~10am), not the windy afternoon.
+    expect(win!.start).toMatch(/AM/)
+    const startHour = parseInt(win!.start)
+    expect(startHour).toBeLessThanOrEqual(9)
+  })
+
+  it('builds the reason from real conditions when a forecast is given', () => {
+    const win = calculateBestTimeWindow(tideHourly(), 'any', {
+      marineDay: marineDay(),
+      offshoreWindDirection: 45,
+    })
+    // Morning wind ~4mph -> "glassy", plus the swell size.
+    expect(win!.reason).toMatch(/glassy/i)
+    expect(win!.reason).toMatch(/ft/)
+  })
+
+  it('falls back to the time-of-day heuristic without a forecast', () => {
+    const win = calculateBestTimeWindow(tideHourly(), 'any')
+    expect(win).not.toBeNull()
+    // Heuristic favours dawn and uses the old wording.
+    expect(win!.reason).toMatch(/morning|glass-off|conditions/i)
   })
 })

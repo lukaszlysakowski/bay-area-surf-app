@@ -1,4 +1,5 @@
 import type { SurfConditions, SpotConfig, ScoreResult, SkillConfig, TideData } from '../types'
+import type { MarineDayForecast } from './api/openmeteo'
 import { normalizeAngle } from './utils'
 
 // Skill configurations for wave height preferences
@@ -397,18 +398,72 @@ export function getConditionsQuality(score: number): string {
  *
  * Returns: { start: "6:00 AM", end: "9:00 AM", reason: "Low tide + light winds" }
  */
+interface BestTimeForecast {
+  /** Marine day forecast with real hourly wind + swell for the target day. */
+  marineDay?: MarineDayForecast | null
+  /** Spot's offshore wind bearing, so wind can be scored on direction too. */
+  offshoreWindDirection?: number
+}
+
+/** Wind quality (0-100) from speed alone — used when no offshore bearing given. */
+function windScoreFromSpeed(mph: number): number {
+  if (mph < 5) return 100
+  if (mph < 10) return 80
+  if (mph < 15) return 50
+  if (mph < 20) return 25
+  return 8
+}
+
+/** Time-of-day wind heuristic (0-100) — the fallback when no forecast is given. */
+function heuristicWindScore(hour: number): number {
+  if (hour >= 5 && hour < 9) return 100 // dawn patrol
+  if (hour >= 9 && hour < 11) return 70 // late morning
+  if (hour >= 11 && hour < 15) return 20 // midday, typically windiest
+  if (hour >= 15 && hour < 17) return 40 // afternoon building
+  if (hour >= 17 && hour < 19) return 80 // evening glass-off
+  return 50
+}
+
+/** Swell quality (0-100) rewarding size and period. */
+function swellSizeScore(heightFt: number, periodSec: number): number {
+  const size = Math.min(1, heightFt / 5) * 70
+  const period = Math.min(1, Math.max(0, (periodSec - 8) / 8)) * 30
+  return size + period
+}
+
+/**
+ * Finds the best surf window of the day.
+ *
+ * When a marine forecast is supplied, each hour is scored on the ACTUAL
+ * forecast — tide fit + real wind (speed, and direction vs offshore if known) +
+ * swell size/period. Without a forecast it falls back to a time-of-day wind
+ * heuristic (dawn best, midday worst) plus tide, preserving the old behaviour.
+ */
 export function calculateBestTimeWindow(
   tideData: TideData,
-  spotBestTide: 'low' | 'mid' | 'high' | 'any'
+  spotBestTide: 'low' | 'mid' | 'high' | 'any',
+  forecast?: BestTimeForecast
 ): { start: string; end: string; reason: string } | null {
   if (!tideData.hourly || tideData.hourly.length === 0) {
     return null
   }
 
-  // Score each hour of the day
-  const hourlyScores: Array<{ hour: number; score: number; tideHeight: number }> = []
+  const marineDay = forecast?.marineDay ?? null
+  const offshore = forecast?.offshoreWindDirection
 
-  // Get the date from the tide data (use first prediction's date)
+  // Index the marine hours by clock hour for quick lookup.
+  const marineByHour = new Map<number, { windMph: number; windDir: number; swellFt: number; swellPeriod: number }>()
+  if (marineDay) {
+    for (const h of marineDay.hourly) {
+      marineByHour.set(h.time.getHours(), {
+        windMph: h.windSpeedMph,
+        windDir: h.windDirection,
+        swellFt: h.swellHeightFt,
+        swellPeriod: h.swellPeriod,
+      })
+    }
+  }
+
   const firstPrediction = tideData.hourly[0]
   if (!firstPrediction) return null
 
@@ -416,6 +471,14 @@ export function calculateBestTimeWindow(
   targetDate.setHours(0, 0, 0, 0)
   const nextDay = new Date(targetDate)
   nextDay.setDate(nextDay.getDate() + 1)
+
+  const hourlyScores: Array<{
+    hour: number
+    score: number
+    tideHeight: number
+    windMph?: number
+    swellFt?: number
+  }> = []
 
   for (const prediction of tideData.hourly) {
     const time = new Date(prediction.time)
@@ -425,75 +488,82 @@ export function calculateBestTimeWindow(
     const hour = time.getHours()
     if (hour < 5 || hour > 20) continue
 
-    let score = 0
     const tideHeight = prediction.height
+    const tideScore = scoreTideForWindow(tideHeight, spotBestTide) // 0-100
 
-    // Tide score (0-50 points)
-    const tideScore = scoreTideForWindow(tideHeight, spotBestTide)
-    score += tideScore * 0.5
+    const marine = marineByHour.get(hour)
+    let windScore: number // 0-100
+    let swellScore: number // 0-100
+    let windMph: number | undefined
+    let swellFt: number | undefined
 
-    // Wind pattern score (0-50 points)
-    // Early morning (5-9am) = best winds (50 pts)
-    // Late morning (9-11am) = good winds (35 pts)
-    // Midday (11am-3pm) = worst winds (10 pts)
-    // Late afternoon (3-5pm) = building (20 pts)
-    // Evening glass-off (5-7pm) = good winds (40 pts)
-    // After 7pm = fading light (25 pts)
-    let windScore: number
-    if (hour >= 5 && hour < 9) {
-      windScore = 50 // Dawn patrol - best winds
-    } else if (hour >= 9 && hour < 11) {
-      windScore = 35 // Late morning - still decent
-    } else if (hour >= 11 && hour < 15) {
-      windScore = 10 // Midday - typically windiest
-    } else if (hour >= 15 && hour < 17) {
-      windScore = 20 // Afternoon - winds often building
-    } else if (hour >= 17 && hour < 19) {
-      windScore = 40 // Evening glass-off
+    if (marine) {
+      windMph = marine.windMph
+      swellFt = marine.swellFt
+      windScore =
+        offshore !== undefined
+          ? scoreWind(marine.windMph, marine.windDir, offshore)
+          : windScoreFromSpeed(marine.windMph)
+      swellScore = swellSizeScore(marine.swellFt, marine.swellPeriod)
     } else {
-      windScore = 25 // Early or late - light concerns
+      // No forecast for this hour — fall back to the heuristic; swell neutral.
+      windScore = heuristicWindScore(hour)
+      swellScore = 60
     }
-    score += windScore
 
-    hourlyScores.push({ hour, score, tideHeight })
+    const score = tideScore * 0.35 + windScore * 0.45 + swellScore * 0.2
+    hourlyScores.push({ hour, score, tideHeight, windMph, swellFt })
   }
 
   if (hourlyScores.length === 0) {
     return null
   }
 
-  // Find the best consecutive 2-4 hour window
-  let bestWindow = { startHour: 6, endHour: 9, avgScore: 0, avgTide: 0 }
+  // Find the best consecutive 2-3 hour window
+  let bestWindow: {
+    startHour: number
+    endHour: number
+    avgScore: number
+    hours: typeof hourlyScores
+  } = { startHour: 6, endHour: 9, avgScore: -1, hours: [] }
 
   for (let windowSize = 3; windowSize >= 2; windowSize--) {
     for (let i = 0; i <= hourlyScores.length - windowSize; i++) {
       const window = hourlyScores.slice(i, i + windowSize)
       const avgScore = window.reduce((sum, h) => sum + h.score, 0) / windowSize
-      const avgTide = window.reduce((sum, h) => sum + h.tideHeight, 0) / windowSize
-
       if (avgScore > bestWindow.avgScore) {
         bestWindow = {
           startHour: window[0].hour,
           endHour: window[window.length - 1].hour + 1,
           avgScore,
-          avgTide,
+          hours: window,
         }
       }
     }
   }
 
-  // Generate reason based on time and tide
-  let reason: string
-  const isEarlyMorning = bestWindow.startHour >= 5 && bestWindow.startHour < 9
-  const isEvening = bestWindow.startHour >= 17
-  const tideDesc = getTideDescription(bestWindow.avgTide)
+  const avg = (nums: number[]) => nums.reduce((a, b) => a + b, 0) / nums.length
+  const avgTide = avg(bestWindow.hours.map((h) => h.tideHeight))
+  const tideDesc = getTideDescription(avgTide)
 
-  if (isEarlyMorning) {
-    reason = `${tideDesc} + light morning winds`
-  } else if (isEvening) {
-    reason = `${tideDesc} + evening glass-off`
+  // Build the reason from real conditions when we have them.
+  let reason: string
+  const windValues = bestWindow.hours.map((h) => h.windMph).filter((w): w is number => w !== undefined)
+  const swellValues = bestWindow.hours.map((h) => h.swellFt).filter((s): s is number => s !== undefined)
+
+  if (windValues.length > 0) {
+    const windMph = Math.round(avg(windValues))
+    const windDesc =
+      windMph < 5 ? 'glassy' : windMph < 10 ? 'light wind' : windMph < 15 ? 'breezy' : 'windy'
+    const swellDesc = swellValues.length > 0 ? ` · ${avg(swellValues).toFixed(1)}ft` : ''
+    reason = `${tideDesc} + ${windDesc}${swellDesc}`
   } else {
-    reason = `${tideDesc} conditions`
+    // Heuristic fallback wording.
+    const isEarlyMorning = bestWindow.startHour >= 5 && bestWindow.startHour < 9
+    const isEvening = bestWindow.startHour >= 17
+    if (isEarlyMorning) reason = `${tideDesc} + light morning winds`
+    else if (isEvening) reason = `${tideDesc} + evening glass-off`
+    else reason = `${tideDesc} conditions`
   }
 
   return {
