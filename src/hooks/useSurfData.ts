@@ -73,11 +73,19 @@ export function useSurfData(options: UseSurfDataOptions) {
         continue
       }
 
-      // Today/now: buoy (wave) data is essential; tide is supplementary. Build
-      // conditions as soon as wave data is present so a failed tide station never
-      // drops the spot from the ranking.
+      // Today/now: prefer the live buoy (most accurate for right now). Tide is
+      // supplementary, so build as soon as wave data is present.
       if (buoyData) {
         map.set(spot.id, buildConditions(buoyData, tideData ?? null))
+        continue
+      }
+
+      // Buoy unavailable (NDBC outage) — fall back to today's forecast so the
+      // page never blanks. Slightly less "live", but the spot stays ranked.
+      const forecast = marineQueries.data.get(spot.id)
+      const day = getForecastForDate(forecast ?? undefined, targetDate)
+      if (day) {
+        map.set(spot.id, marineDayToConditions(day, tideData ?? null))
       }
     }
 
@@ -127,20 +135,25 @@ export function useSurfData(options: UseSurfDataOptions) {
     conditionsMap,
     tideDataMap,
     marineDayMap,
-    // Marine only blocks the page on future dates (where scoring needs it). On
-    // today/now it loads in the background and the Best Surf Times upgrade when
-    // it arrives, so it never delays the buoy-driven ranking.
+    // Marine normally loads in the background on today/now (Best Surf Times
+    // upgrade when it arrives) and doesn't delay the buoy-driven ranking. But if
+    // the buoy has failed, marine becomes today's rescue source, so wait for it
+    // rather than flashing an empty/error state.
     isLoading:
-      buoyQueries.isLoading || tideQueries.isLoading || (isFutureDate && marineQueries.isLoading),
+      buoyQueries.isLoading ||
+      tideQueries.isLoading ||
+      ((isFutureDate || buoyQueries.isError) && marineQueries.isLoading),
     // Only blank the page when no spot has usable conditions. conditionsMap holds
     // only spots whose source data loaded (scoreAndRankSpots pads the rest with a
     // "no data" placeholder, so rankedSpots is always the full list and can't be
-    // used here). A partial outage still renders the spots that loaded; tide
-    // outages already degrade gracefully. On future dates the forecast is the
-    // essential source; today/now it's the buoy.
+    // used here). A partial outage still renders the spots that loaded. Future
+    // dates rely on the forecast; today/now prefers the buoy but falls back to
+    // the forecast, so it only errors once the forecast has also failed.
     isError:
       conditionsMap.size === 0 &&
-      (isFutureDate ? marineQueries.isError : buoyQueries.isError),
+      (isFutureDate
+        ? marineQueries.isError
+        : buoyQueries.isError && marineQueries.isError),
     errors: [...buoyQueries.errors, ...tideQueries.errors],
   }
 }
